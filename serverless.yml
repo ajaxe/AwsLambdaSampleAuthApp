@@ -64,7 +64,7 @@ package: # Optional deployment packaging configuration
 
 functions:
   indexGet: # A Function
-    handler: src/handlers.indexGet # The file and module for this specific function.
+    handler: dist/api/handlers.indexGet # The file and module for this specific function.
     name: ${self:custom.serviceName}-${self:provider.stage}-indexGet # optional, Deployed Lambda name
     description: My function # The description of your function.
     memorySize: 128 # memorySize for this specific function.
