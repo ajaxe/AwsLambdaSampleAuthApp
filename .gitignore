@@ -1,3 +1,6 @@
 /node_modules/
 /dist/
 .cache/
+.serverless/
+.nyc_output/
+.build/
