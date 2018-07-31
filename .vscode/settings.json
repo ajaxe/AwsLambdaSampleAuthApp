@@ -1,0 +1,9 @@
+{
+    "mocha.files.glob": "src/**/*.spec.ts",
+    "mocha.requires": ["ts-node/register"],
+    "mocha.options":{
+        "--timeout": "9999",
+        "--colors": "",
+        "-u": "tdd"
+    }
+}
