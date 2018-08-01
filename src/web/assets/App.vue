@@ -5,6 +5,7 @@
                 <span class="navbar-brand mb-0 h1">{{appName}}</span>
             </div>
         </nav>
+        <div class="filler navbar-dark bg-dark"></div>
         <div class="container main-container">
             <login />
         </div>
@@ -13,10 +14,14 @@
 
 <style lang="scss" scoped>
 .main-container {
-    margin-top: -100px;
+    margin-top: 10vh;
 }
-nav {
-    height: 200px;
+.filler {
+    height: calc(30vh - 60px);
+    margin-top: -1px;
+    position: absolute;
+    width: 100%;
+    z-index: -1
 }
 </style>
 
