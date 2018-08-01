@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Aws Lambda Sample Auth App</title>
-    <script src="./assets/test.ts"></script>
 </head>
 <body>
-    <input type="hidden" value="{{X-CSRF-TOKEN}}" />
-    <h1>Live</h1>
-    <div id="dyn-text"></div>
+    <input type="hidden" value="{{X-CSRF-TOKEN}}" name="__RequestToken"/>
+    <div id="app"></div>
+    <script src="./assets/index.ts"></script>
 </body>
 </html>
