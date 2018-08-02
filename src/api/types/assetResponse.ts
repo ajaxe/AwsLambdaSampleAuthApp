@@ -1,4 +1,4 @@
-
+import { CsrfTokenPair } from './csrfTokenPair';
 
 export class AssetResponse {
     body: string;
@@ -6,4 +6,5 @@ export class AssetResponse {
     headers?: {
         [header: string]: boolean | number | string;
     };
+    csrfTokens: CsrfTokenPair;
 }

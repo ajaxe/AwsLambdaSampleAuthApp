@@ -7,16 +7,26 @@ import {
     APIGatewayProxyCallback
 } from 'aws-lambda';
 import { ServiceFactory } from './services/serviceInterfaces';
+import { Cookie } from './types/cookies';
+import { CsrfTokenPair } from './types/csrfTokenPair';
+
+const domain='apps.apogee-dev.com', tokenExpireDays=10;
 
 const indexGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
     try {
-        let response = await ServiceFactory.getFileServices().getIndexHtml();
+        console.log('event: ' + JSON.stringify(event));
+        let response = await ServiceFactory.getFileServices().getIndexHtml(),
+            cookies = new Cookie();
+        cookies.setCookie(CsrfTokenPair.CsrfTokenCookieName,
+                response.csrfTokens.cookieToken,
+                tokenExpireDays,
+                domain);
         let result: APIGatewayProxyResult = {
-            statusCode: 200,
-            headers: response.headers,
-            body: response.body,
-            isBase64Encoded: response.isBase64Encoded
-        }
+                statusCode: 200,
+                headers: Object.assign({}, response.headers, cookies.getHeader()),
+                body: response.body,
+                isBase64Encoded: response.isBase64Encoded
+            };
         return result;
     }
     catch (err) {
