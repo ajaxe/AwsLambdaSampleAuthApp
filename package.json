@@ -24,6 +24,7 @@
     "node-sass": "^4.9.2",
     "parcel-bundler": "^1.9.7",
     "posthtml": "^0.11.3",
+    "serverless": "^1.29.2",
     "serverless-dynamodb-local": "^0.2.30",
     "serverless-offline": "^3.25.6",
     "serverless-plugin-include-dependencies": "^3.1.1",
@@ -41,9 +42,6 @@
     "@aws/dynamodb-data-mapper-annotations": "^0.7.2",
     "@types/aws4": "^1.5.1",
     "@vue/component-compiler-utils": "^2.1.0",
-    "bootstrap-vue": "^2.0.0-rc.11",
-    "jquery": "^3.3.1",
-    "serverless": "^1.29.1",
     "uuid": "^3.3.2",
     "vue": "^2.5.16"
   },

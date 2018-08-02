@@ -34,7 +34,7 @@ export class HostFileServices implements FileServices {
                         }
 
                         response.headers = {
-                            "Content-Type": data.ContentType
+                            "Content-Type": `${data.ContentType}; charset=UTF-8`
                         };
                         resolve(response);
                     }
