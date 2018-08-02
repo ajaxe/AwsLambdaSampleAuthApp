@@ -12,7 +12,7 @@ const assetFolderName = "assets";
 const options = {
     outDir: './' + deployPath, // The out directory to put the build files in, defaults to dist
     outFile: 'index.html', // The name of the outputFile
-    publicUrl: './dev/' + assetFolderName, // The url to server on, defaults to dist
+    publicUrl: './' + assetFolderName, // The url to server on, defaults to dist
     watch: false, // whether to watch the files and rebuild them on change, defaults to process.env.NODE_ENV !== 'production'
     cache: false, // Enabled or disables caching, defaults to true
     cacheDir: '.cache', // The directory cache gets put in, defaults to .cache
