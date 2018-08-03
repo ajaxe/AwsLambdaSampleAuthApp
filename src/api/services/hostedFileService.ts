@@ -2,10 +2,12 @@ import { S3, AWSError } from 'aws-sdk'
 import { FileServices } from './serviceInterfaces'
 import { ManagedKeyServices } from './serviceInterfaces';
 import { AssetResponse } from '../types/assetResponse';
+import { CsrfTokenPair } from '../types/csrfTokenPair';
+
 
 const s3Client = new S3({
-    apiVersion: 'latest'
-}),
+        apiVersion: 'latest'
+    }),
     appBucketName = 'aws-lambda-sample-auth-app',
     indexFilename = 'index.html',
     csrfPlaceholderToken = "{{X-CSRF-TOKEN}}";
@@ -52,11 +54,12 @@ export class HostFileServices implements FileServices {
             Bucket: appBucketName,
             Key: indexFilename
         };
-        let token = await this.keyServices.getCsrfToken(),
-        asset = await this.getObject(request, (d: string) =>{
-            let regex: RegExp = new RegExp(csrfPlaceholderToken, 'g');
-            return d.replace(regex, token.formToken);
-        });
+        let token: CsrfTokenPair = await this.keyServices.getCsrfToken(),
+            asset = await this.getObject(request, (d: string) =>{
+                let regex: RegExp = new RegExp(csrfPlaceholderToken, 'g');
+                return d.replace(regex, token.formToken);
+            });
+        asset.csrfTokens = token;
         return asset;
     }
 

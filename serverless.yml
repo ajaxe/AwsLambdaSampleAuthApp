@@ -2,6 +2,7 @@
 
 custom:
   serviceName: SampleAuthentication
+  dataKey: ${file(dataKey.yml):dataKey}
 
 service:
   name: ${self:custom.serviceName}
@@ -53,11 +54,12 @@ package:
     - ./**
     - src/web/**/*
     - node_modules/**
-    - node_modules/aws-sdk/**
     - node_modules/**/README.*
     - node_modules/**/test/**
+    - node_modules/**/*.d.ts
   include:
     - src/api/**/*
+    - package.json
   individually: false # Enables individual packaging for specific function. If true you must provide package for each function. Defaults to false
   excludeDevDependencies: true
 
@@ -67,7 +69,9 @@ functions:
     name: ${self:custom.serviceName}-${self:provider.stage}-indexGet # optional, Deployed Lambda name
     description: Server index.html # The description of your function.
     memorySize: 128 # memorySize for this specific function.
-
+    environment:
+      dataKeyEnvVar: "${self:custom.dataKey}"
+      serviceEnvVar: 123456789
     events: # The Events that trigger this Function
       - http: # This creates an API Gateway HTTP endpoint which can be used to trigger this function.  Learn more in "events/apigateway"
           path: /index.html # Path for this endpoint
@@ -94,6 +98,6 @@ functions:
 
 plugins:
   - serverless-plugin-typescript
-  - serverless-plugin-include-dependencies
+  - custom-serverless-plugin-include-dependencies
   - serverless-dynamodb-local
   - serverless-offline
