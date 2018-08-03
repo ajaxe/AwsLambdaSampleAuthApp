@@ -4,11 +4,18 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "type": "node",
             "request": "launch",
             "name": "Debug - S3 Deploy",
-            "program": "${workspaceFolder}/helpers/deploy-to-s3.js"
+            "program": "${workspaceFolder}/helpers/deployToS3.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug - DataKey Generator",
+            "program": "${workspaceFolder}/helpers/dataKeyGenerator.js"
         },
         {
             "type": "node",

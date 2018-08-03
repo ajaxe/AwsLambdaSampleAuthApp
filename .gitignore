@@ -5,3 +5,6 @@ dist/
 .nyc_output/
 .build/
 coverage/
+**/dataKey.txt
+dataKey.yml
+dataKey.json

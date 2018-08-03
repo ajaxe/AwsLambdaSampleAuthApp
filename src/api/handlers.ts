@@ -6,9 +6,9 @@ import {
     Context,
     APIGatewayProxyCallback
 } from 'aws-lambda';
-import { Cookie } from './types/cookies';
 import { CsrfTokenPair } from './types/csrfTokenPair';
 import { ObjectFactory } from './common/objectFactory';
+import { Cookie } from './types/cookies';
 
 const domain='apps.apogee-dev.com', tokenExpireDays=10,
     exceptionHandler = function(error: any): APIGatewayProxyResult {

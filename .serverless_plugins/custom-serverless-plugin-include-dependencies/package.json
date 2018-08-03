@@ -1,0 +1,111 @@
+{
+  "_from": "serverless-plugin-include-dependencies@^3.1.1",
+  "_id": "serverless-plugin-include-dependencies@3.1.1",
+  "_inBundle": false,
+  "_integrity": "sha512-4wpWq0zUno01KxRDGXdTrqdC7K/IAij7XcPddjKJiQ1UDIkuFg4PwgE4y4Z3ulBXWqTO4aoihet1sr7zjAJ1+w==",
+  "_location": "/serverless-plugin-include-dependencies",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "serverless-plugin-include-dependencies@^3.1.1",
+    "name": "serverless-plugin-include-dependencies",
+    "escapedName": "serverless-plugin-include-dependencies",
+    "rawSpec": "^3.1.1",
+    "saveSpec": null,
+    "fetchSpec": "^3.1.1"
+  },
+  "_requiredBy": [
+    "#DEV:/"
+  ],
+  "_resolved": "https://registry.npmjs.org/serverless-plugin-include-dependencies/-/serverless-plugin-include-dependencies-3.1.1.tgz",
+  "_shasum": "a590404cfc14e489630906f9ee67cb9e1cf26c22",
+  "_spec": "serverless-plugin-include-dependencies@^3.1.1",
+  "_where": "E:\\Projects\\AWS\\Lambdas\\SampleAuthentication",
+  "author": {
+    "name": "Doug Moscrop",
+    "email": "doug.moscrop@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/dougmoscrop/serverless-plugin-include-dependencies/issues"
+  },
+  "bundleDependencies": false,
+  "contributors": [
+    {
+      "name": "Doug Moscrop",
+      "url": "https://github.com/dougmoscrop"
+    },
+    {
+      "name": "Nicole Simone",
+      "url": "https://github.com/nsimone"
+    },
+    {
+      "name": "DIALLO Mamadou Bobo",
+      "url": "https://github.com/ecstasy2"
+    },
+    {
+      "name": "Rick",
+      "url": "https://github.com/RickvdP"
+    },
+    {
+      "name": "Russell Schick",
+      "url": "https://github.com/rschick"
+    },
+    {
+      "name": "Tommy Brunn",
+      "url": "http://tommybrunn.com"
+    }
+  ],
+  "dependencies": {
+    "glob": "^7.1.1",
+    "micromatch": "^3.1.0",
+    "precinct": "^4.2.0",
+    "require-package-name": "^2.0.1",
+    "resolve": "^1.3.2",
+    "resolve-pkg": "^1.0.0",
+    "semver": "^5.3.0"
+  },
+  "deprecated": false,
+  "description": "A Serverless plugin that reduces your packaged function size",
+  "devDependencies": {
+    "ava": "^0.25.0",
+    "eslint": "^5.2.0",
+    "lodash": "^4.17.10",
+    "nyc": "^12.0.2",
+    "sinon": "^6.1.4",
+    "update": "^0.7.4",
+    "updater-contributors": "^0.1.2"
+  },
+  "engines": {
+    "node": ">=4.0"
+  },
+  "homepage": "https://github.com/dougmoscrop/serverless-plugin-include-dependencies#readme",
+  "keywords": [
+    "serverless",
+    "serverless plugins"
+  ],
+  "license": "MIT",
+  "main": "include-dependencies.js",
+  "name": "serverless-plugin-include-dependencies",
+  "nyc": {
+    "reporter": [
+      "lcov",
+      "text-summary"
+    ],
+    "exclude": [
+      "__tests__",
+      "coverage"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dougmoscrop/serverless-plugin-include-dependencies.git"
+  },
+  "scripts": {
+    "posttest": "eslint .",
+    "preversion": "update contributors",
+    "publish": "git push origin master; git push origin --tags",
+    "test": "nyc --all ava"
+  },
+  "version": "3.1.1"
+}
