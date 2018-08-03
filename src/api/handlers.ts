@@ -6,16 +6,23 @@ import {
     Context,
     APIGatewayProxyCallback
 } from 'aws-lambda';
-import { ServiceFactory } from './services/serviceInterfaces';
 import { Cookie } from './types/cookies';
 import { CsrfTokenPair } from './types/csrfTokenPair';
+import { ObjectFactory } from './common/objectFactory';
 
-const domain='apps.apogee-dev.com', tokenExpireDays=10;
+const domain='apps.apogee-dev.com', tokenExpireDays=10,
+    exceptionHandler = function(error: any): APIGatewayProxyResult {
+        console.log('Global handler: ' + error.stack);
+        return {
+            statusCode: 500,
+            body: "Internal Server Error"
+        };
+    };
 
 const indexGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
     try {
         console.log('event: ' + JSON.stringify(event));
-        let response = await ServiceFactory.getFileServices().getIndexHtml(),
+        let response = await ObjectFactory.getFileServices().getIndexHtml(),
             cookies = new Cookie();
         cookies.setCookie(CsrfTokenPair.CsrfTokenCookieName,
                 response.csrfTokens.cookieToken,
@@ -30,11 +37,7 @@ const indexGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEv
         return result;
     }
     catch (err) {
-        console.log('Global handler: ' + err.stack);
-        return {
-            statusCode: 500,
-            body: "Internal Server Error"
-        };
+        return exceptionHandler(err);
     }
 };
 
@@ -42,7 +45,7 @@ const assetGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEv
     try {
         console.log('event: ' + JSON.stringify(event));
         let proxyParam = event.pathParameters['proxy'],
-            response = await ServiceFactory.getFileServices().getAsset(proxyParam),
+            response = await ObjectFactory.getFileServices().getAsset(proxyParam),
             result: APIGatewayProxyResult = {
                 statusCode: 200,
                 headers: response.headers,
@@ -52,11 +55,7 @@ const assetGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEv
         return result;
     }
     catch (err) {
-        console.log('Global handler: ' + err.stack);
-        return {
-            statusCode: 500,
-            body: "Internal Server Error"
-        };
+        return exceptionHandler(err);
     }
 }
 

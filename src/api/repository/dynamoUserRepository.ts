@@ -1,7 +1,7 @@
 
 import { DataMapper } from '@aws/dynamodb-data-mapper';
 import { User } from '../types/user';
-import { UserRepository } from './userRepository';
+import { UserRepository } from './repositoryInterfaces';
 
 const username_idx = "username";
 

@@ -40,7 +40,6 @@
 
 <script lang="ts">
 import { Vue, Component, Provide } from "vue-property-decorator";
-import { Form } from "bootstrap-vue";
 
 @Component
 export default class Login extends Vue {

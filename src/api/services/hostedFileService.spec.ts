@@ -16,8 +16,8 @@ describe('HostFileServices', function () {
                 }
             }
             let fileService: FileServices = new HostFileServices(keyService);
-            let html = await fileService.getIndexHtml();
-            expect(html).contains(token);
+            let htmlAsset = await fileService.getIndexHtml();
+            expect(htmlAsset.body).contains(token);
         });
     });
 });
