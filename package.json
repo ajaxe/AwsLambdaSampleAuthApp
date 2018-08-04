@@ -50,7 +50,8 @@
     "popper.js": "^1.14.3",
     "tslib": "^1.9.3",
     "uuid": "^3.3.2",
-    "vue": "^2.5.16"
+    "vue": "^2.5.16",
+    "vue-router": "^3.0.1"
   },
   "repository": "https://github.com/ajaxe/AwsLambdaSampleAuthApp.git",
   "private": true

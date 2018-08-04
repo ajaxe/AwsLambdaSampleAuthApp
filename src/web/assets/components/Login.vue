@@ -21,7 +21,7 @@
                         <div class="d-flex">
                             <button class="btn btn-primary" type="submit" @click="login">Submit</button>
                             <div class="align-self-center" style="margin-left: 10px;">
-                                <a href="#">Register</a>
+                                <router-link to="/register">Register</router-link>
                             </div>
                         </div>
                     </div>

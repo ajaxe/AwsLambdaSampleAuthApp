@@ -7,7 +7,7 @@
         </nav>
         <div class="filler navbar-dark bg-dark"></div>
         <div class="container main-container">
-            <login />
+            <router-view></router-view>
         </div>
     </div>
 </template>
@@ -29,18 +29,27 @@
 <script lang="ts">
 import { Vue, Component, Prop, Provide } from "vue-property-decorator";
 import Login from './components/Login.vue';
+import Register from './components/Register.vue';
+import VueRouter from 'vue-router';
+
+const routes = [
+  { path: '/register', component: Register },
+  { path: '/login', component: Login },
+  { path: '/', redirect: '/login' }
+];
+const router = new VueRouter({
+  routes // short for `routes: routes`
+});
 
 @Component({
     components: {
-        Login
-    }
+        Login,
+        Register
+    },
+    router
 })
 export default class App extends Vue {
   @Provide() appName: string = "AWS Sample Lambda Web App";
-
-  sayHiBack(): void {
-    console.log("hi");
-  }
 }
 </script>
 

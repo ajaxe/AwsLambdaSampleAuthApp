@@ -2,7 +2,7 @@ import { ManagedKeyServices } from './serviceInterfaces';
 import { CsrfTokenPair } from '../types/csrfTokenPair';
 import { KMS, AWSError } from 'aws-sdk'
 import { ConfigRepository } from '../repository/repositoryInterfaces';
-import { GenerateRandomResponse } from '../../../node_modules/aws-sdk/clients/kms';
+import { GenerateRandomResponse } from 'aws-sdk/clients/kms';
 import crypto = require('crypto');
 import uuidv4 = require('uuid/v4');
 

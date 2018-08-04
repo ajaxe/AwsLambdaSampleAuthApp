@@ -11,17 +11,20 @@ import { ObjectFactory } from './common/objectFactory';
 import { Cookie } from './types/cookies';
 
 const domain='apps.apogee-dev.com', tokenExpireDays=10,
-    exceptionHandler = function(error: any): APIGatewayProxyResult {
+    exceptionHandler = function(error: any, event: APIGatewayProxyEvent): APIGatewayProxyResult {
+        console.log('api gateway event: ' + JSON.stringify(event));
         console.log('Global handler: ' + error.stack);
         return {
             statusCode: 500,
             body: "Internal Server Error"
         };
+    },
+    validateCsrfTokens = function(event: APIGatewayProxyEvent): void {
+        
     };
 
 const indexGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
     try {
-        console.log('event: ' + JSON.stringify(event));
         let response = await ObjectFactory.getFileServices().getIndexHtml(),
             cookies = new Cookie();
         cookies.setCookie(CsrfTokenPair.CsrfTokenCookieName,
@@ -37,13 +40,12 @@ const indexGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEv
         return result;
     }
     catch (err) {
-        return exceptionHandler(err);
+        return exceptionHandler(err, event);
     }
 };
 
 const assetGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
     try {
-        console.log('event: ' + JSON.stringify(event));
         let proxyParam = event.pathParameters['proxy'],
             response = await ObjectFactory.getFileServices().getAsset(proxyParam),
             result: APIGatewayProxyResult = {
@@ -55,7 +57,7 @@ const assetGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEv
         return result;
     }
     catch (err) {
-        return exceptionHandler(err);
+        return exceptionHandler(err, event);
     }
 }
 
