@@ -9,6 +9,8 @@ import {
 import { CsrfTokenPair } from './types/csrfTokenPair';
 import { ObjectFactory } from './common/objectFactory';
 import { Cookie } from './types/cookies';
+import { ValidatableObject } from './types/validateableObject';
+import { UserRegistration } from './types/userRegistration';
 
 const domain='apps.apogee-dev.com', tokenExpireDays=10,
     exceptionHandler = function(error: any, event: APIGatewayProxyEvent, responseProvider?: () => APIGatewayProxyResult): APIGatewayProxyResult {
@@ -22,6 +24,21 @@ const domain='apps.apogee-dev.com', tokenExpireDays=10,
     },
     validateCsrfTokens = function(event: APIGatewayProxyEvent): void {
 
+    },
+    validateModel = function<T extends ValidatableObject>(event: APIGatewayProxyEvent, ctor: new () => T): T {
+        let model = new ctor();
+        let jsonContentType = 'application/json';
+        let isJsonContentType = event.headers['content-type'] === jsonContentType;
+        if(!isJsonContentType) {
+            throw new Error('Invalid content-type header. Expect: ' + jsonContentType);
+        }
+        Object.assign(model, JSON.parse(event.body));
+        let validationResult = model.validate();
+        if(!validationResult.isValid) {
+            throw new Error(JSON.stringify(validationResult));
+        }
+        console.log(`model valid. types: ${typeof model}`);
+        return model;
     };
 
 const indexGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
@@ -60,6 +77,31 @@ const assetGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEv
     catch (err) {
         return exceptionHandler(err, event);
     }
+};
+
+const registerUser: APIGatewayProxyHandler = async function(event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
+    let model: UserRegistration;
+    try {
+        model = validateModel(event, UserRegistration);
+    }
+    catch(err){
+        return exceptionHandler(err, event, () => {
+            return {
+                statusCode: 400,
+                body: err.message
+            };
+        });
+    }
+    try{
+        await ObjectFactory.getApplicationServices().registerUser(model);
+        return {
+            statusCode: 201,
+            body: ""
+        };
+    }
+    catch(err){
+        return exceptionHandler(err, event);
+    }
 }
 
-export { indexGet, assetGet }
+export { indexGet, assetGet, registerUser }

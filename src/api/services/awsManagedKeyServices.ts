@@ -5,13 +5,31 @@ import { ConfigRepository } from '../repository/repositoryInterfaces';
 import { GenerateRandomResponse } from 'aws-sdk/clients/kms';
 import crypto = require('crypto');
 import uuidv4 = require('uuid/v4');
+import { HashResult } from '../types/hashResult';
 
 
 const kmsClient = new KMS({ apiVersion: 'latest' });
 const encryptedDataKey: string = process.env.dataKeyEnvVar;
 const csrfTokenLength = 32;
 const iv = new Buffer('76967d9d77f14dfa');
+const algorithm = 'aes-256-ctr';
 let decryptedDataKey: Buffer = null;
+
+const encrypt = function(plaintText: string, dataKey: Buffer): string {
+    let cipher = crypto.createCipheriv(algorithm, dataKey, iv);
+    let crypted = cipher.update(plaintText, 'utf8', 'base64');
+    crypted += cipher.final('base64');
+    return crypted;
+};
+const decrypt = function(cipherText: string, dataKey: Buffer) {
+    let decipher = crypto.createDecipheriv(algorithm, dataKey, iv);
+    let decrypted = decipher.update(cipherText, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+};
+const getRandomToken = function(): string {
+    return crypto.randomBytes(csrfTokenLength).toString('hex');
+}
 
 export type TokenParts = { prefix: string, salt: string, token: string };
 
@@ -26,7 +44,7 @@ export class CsrfTokenGenerator {
         this.csrfTokenPair = csrfTokenPair;
     }
     private parseToken(csrfToken: string): string {
-        let decrypted = this.decrypt(csrfToken);
+        let decrypted = decrypt(csrfToken, this.dataKey);
         let tokenParts = this.deformatToken(decrypted);
         this.validatedToken(tokenParts);
         return tokenParts.token;
@@ -48,21 +66,6 @@ export class CsrfTokenGenerator {
     private formatToken(salt: string, token: string): string {
         return `${this.prefix};${salt};${token}`;
     }
-    private getRandomToken(): string {
-        return crypto.randomBytes(csrfTokenLength).toString('hex');
-    }
-    private encrypt(plaintText: string): string {
-        let cipher = crypto.createCipheriv(this.algorithm, this.dataKey, iv);
-        let crypted = cipher.update(plaintText, 'utf8', 'base64');
-        crypted += cipher.final('base64');
-        return crypted;
-    }
-    private decrypt(cipherText: string) {
-        let decipher = crypto.createDecipheriv(this.algorithm, this.dataKey, iv);
-        let decrypted = decipher.update(cipherText, 'base64', 'utf8');
-        decrypted += decipher.final('utf8');
-        return decrypted;
-    }
 
     decryptCsrfTokens(): CsrfTokenPair {
         return {
@@ -72,10 +75,10 @@ export class CsrfTokenGenerator {
     }
 
     generateCsrfTokens(): CsrfTokenPair {
-        let token = this.getRandomToken();
+        let token = getRandomToken();
         return {
-            cookieToken: this.encrypt(this.formatToken(uuidv4(), token)),
-            formToken: this.encrypt(this.formatToken(uuidv4(), token))
+            cookieToken: encrypt(this.formatToken(uuidv4(), token), this.dataKey),
+            formToken: encrypt(this.formatToken(uuidv4(), token), this.dataKey)
         };
     }
 }
@@ -108,6 +111,12 @@ export class AwsManagedKeyServices implements ManagedKeyServices {
         });
     }
 
+    private createHash(plainText: string, salt: string) {
+        const hash = crypto.createHash('sha256');
+        hash.update(`${plainText}${salt}`);
+        return hash.digest('base64');
+    }
+
     async validateCsrfTokens(tokenPair: CsrfTokenPair): Promise<boolean> {
         let key = await this.getDataKey();
         let tokenGenerator = new CsrfTokenGenerator(key, tokenPair);
@@ -119,5 +128,24 @@ export class AwsManagedKeyServices implements ManagedKeyServices {
         let key = await this.getDataKey();
         let tokenGenerator = new CsrfTokenGenerator(key);
         return tokenGenerator.generateCsrfTokens();
+    }
+
+    hashPassword(password: string): HashResult {
+        let result = new HashResult();
+        result.salt = getRandomToken();
+        result.hashedValue = this.createHash(password, result.salt);
+        return result;
+    }
+
+    /**
+     * Verifies the plaint text password against perviously hashed string.
+     *
+     * @param plaintTextPassword {string} Plain text password to verify
+     * @param hashedPassword {string} Hashed password check against
+     */
+    verifyPassword(plaintTextPassword: string, hashedPassword: string): boolean {
+        let storeHash = HashResult.parse(hashedPassword);
+        let currentHash: string = this.createHash(plaintTextPassword, storeHash.salt);
+        return currentHash === storeHash.hashedValue;
     }
 }

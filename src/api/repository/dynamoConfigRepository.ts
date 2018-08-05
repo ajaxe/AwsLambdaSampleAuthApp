@@ -12,6 +12,7 @@ export class DynamoConfigRepository implements ConfigRepository {
     }
 
     private async ensureConfigTable(): Promise<void> {
+        console.log('ensureUserTable: config');
         return this.mapper.ensureTableExists(Config, {
             readCapacityUnits: 3,
             writeCapacityUnits: 1
