@@ -37,6 +37,21 @@ provider:
         - "s3:ListBucket"
       Resource:
         - 'arn:aws:s3:::aws-lambda-sample-auth-app'
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:BatchGetItem"
+        - "dynamodb:BatchWriteItem"
+        - "dynamodb:PutItem"
+        - "dynamodb:DescribeTable"
+        - "dynamodb:DeleteItem"
+        - "dynamodb:GetItem"
+        - "dynamodb:Scan"
+        - "dynamodb:Query"
+        - "dynamodb:UpdateItem"
+      Resource:
+        - "arn:aws:dynamodb:us-east-1:257953708933:table/users"
+        - "arn:aws:dynamodb:us-east-1:257953708933:table/configs"
+        - "arn:aws:dynamodb:us-east-1:257953708933:table/users/index/username"
 
   usagePlan: # Optional usage plan configuration
     quota:
@@ -99,6 +114,17 @@ functions:
       - http: # This creates an API Gateway HTTP endpoint which can be used to trigger this function.  Learn more in "events/apigateway"
           path: /assets/{proxy+} # Path for this endpoint
           method: get # HTTP method for this endpoint
+          cors: false
+
+  registerUserPost:
+    handler: src/api/handlers.registerUser
+    name: ${self:custom.serviceName}-${self:provider.stage}-registerUserPost
+    description: Register a user
+    memorySize: 128
+    events: # The Events that trigger this Function
+      - http: # This creates an API Gateway HTTP endpoint which can be used to trigger this function.  Learn more in "events/apigateway"
+          path: /user/register # Path for this endpoint
+          method: post # HTTP method for this endpoint
           cors: false
 
 plugins:
