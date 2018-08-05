@@ -14,39 +14,41 @@
 
 <style lang="scss" scoped>
 .main-container {
-    margin-top: 10vh;
+  margin-top: 10vh;
 }
 .filler {
-    height: calc(30vh - 60px);
-    margin-top: -1px;
-    position: absolute;
-    width: 100%;
-    z-index: -1
+  height: calc(30vh - 60px);
+  margin-top: -1px;
+  position: absolute;
+  width: 100%;
+  z-index: -1;
 }
 </style>
 
 
 <script lang="ts">
 import { Vue, Component, Prop, Provide } from "vue-property-decorator";
-import Login from './components/Login.vue';
-import Register from './components/Register.vue';
-import VueRouter from 'vue-router';
+import VueRouter, { RouteConfig } from "vue-router";
+import Login from "./components/Login.vue";
+import Register from "./components/Register.vue";
+import { RouteNames } from "./routes";
 
-const routes = [
-  { path: '/register', component: Register },
-  { path: '/login', component: Login },
-  { path: '/', redirect: '/login' }
+const routes: RouteConfig[] = [
+  { path: "/register", component: Register, name: RouteNames.Register },
+  { path: "/login", component: Login, name: RouteNames.Login },
+  { path: "/", redirect: "/login", name: RouteNames.Home }
 ];
-const router = new VueRouter({
+
+const AppRouter = new VueRouter({
   routes // short for `routes: routes`
 });
 
 @Component({
-    components: {
-        Login,
-        Register
-    },
-    router
+  components: {
+    Login,
+    Register
+  },
+  router: AppRouter
 })
 export default class App extends Vue {
   @Provide() appName: string = "AWS Sample Lambda Web App";

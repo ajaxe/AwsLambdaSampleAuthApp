@@ -36,7 +36,9 @@
 
 <script lang="ts">
 import { Vue, Component, Provide } from "vue-property-decorator";
-import { Api, UserRegister } from './api';
+import { Api } from './api';
+import { RouteNames } from '../routes';
+import { UserRegistration } from '../../../api/types/userRegistration';
 
 @Component
 export default class Register extends Vue {
@@ -47,22 +49,28 @@ export default class Register extends Vue {
 
   register(event: Event): void {
     let form = <HTMLFormElement>this.$refs.registerForm;
-    if (form.checkValidity() === true) {
-        this.api.registerUser({
-            username: this.username,
-            password: this.password,
-            confirmPassword: this.confirmPassword
-        })
+    let self = this;
+    event.preventDefault();
+    event.stopPropagation();
+    let data = Object.assign(new UserRegistration(), {
+        username: this.username,
+        password: this.password,
+        confirmPassword: this.confirmPassword
+    });
+    if (form.checkValidity() === true && data.validate()) {
+        this.api.registerUser(data)
         .then(function(){
             console.log('registered');
+            self.$router.push({ name: RouteNames.Login });
         },
         function(){
             console.log('rejected');
+            alert('error registering');
         });
     }
-    form.classList.add("was-validated");
-    event.preventDefault();
-    event.stopPropagation();
+    else {
+        form.classList.add("was-validated");
+    }
   }
 }
 </script>
