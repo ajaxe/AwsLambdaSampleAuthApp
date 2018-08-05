@@ -12,7 +12,7 @@ if (fs.existsSync(dataKeyFilename)) {
     console.log('Data Key has been generated, do not run this script if the data key is alrady in use.');
     process.exit(1);
 }
-const writeDataKey = async function (cipherText) {
+const writeDataKey = async function (cipherTextBlob) {
     return new Promise(function (resolve, reject) {
         let writeStream = fs.createWriteStream(dataKeyFilename,{ encoding: 'utf8', autoClose: true });
         writeStream.on('error', (err) => {
@@ -24,8 +24,7 @@ const writeDataKey = async function (cipherText) {
             console.log('All writes are now complete.');
             resolve();
         });
-        writeStream.write('dataKey:\n');
-        writeStream.write(`  value: ${cipherText.toString('base64')}\n`);
+        writeStream.write(`dataKey: ${cipherTextBlob.toString('base64')}\n`);
         writeStream.end();
     });
 };

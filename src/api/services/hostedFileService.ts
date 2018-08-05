@@ -54,11 +54,11 @@ export class HostFileServices implements FileServices {
             Bucket: appBucketName,
             Key: indexFilename
         };
-        let token: CsrfTokenPair = await this.keyServices.getCsrfToken(),
-            asset = await this.getObject(request, (d: string) =>{
-                let regex: RegExp = new RegExp(csrfPlaceholderToken, 'g');
-                return d.replace(regex, token.formToken);
-            });
+        let token: CsrfTokenPair = await this.keyServices.getCsrfToken();
+        let asset = await this.getObject(request, (d: string) =>{
+            let regex: RegExp = new RegExp(csrfPlaceholderToken, 'g');
+            return d.replace(regex, token.formToken);
+        });
         asset.csrfTokens = token;
         return asset;
     }

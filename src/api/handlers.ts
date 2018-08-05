@@ -11,16 +11,17 @@ import { ObjectFactory } from './common/objectFactory';
 import { Cookie } from './types/cookies';
 
 const domain='apps.apogee-dev.com', tokenExpireDays=10,
-    exceptionHandler = function(error: any, event: APIGatewayProxyEvent): APIGatewayProxyResult {
-        console.log('api gateway event: ' + JSON.stringify(event));
-        console.log('Global handler: ' + error.stack);
-        return {
+    exceptionHandler = function(error: any, event: APIGatewayProxyEvent, responseProvider?: () => APIGatewayProxyResult): APIGatewayProxyResult {
+        let result: APIGatewayProxyResult = !!responseProvider ? responseProvider() : {
             statusCode: 500,
             body: "Internal Server Error"
         };
+        console.log('api gateway event: ' + JSON.stringify(event));
+        console.log('Global handler: ' + error.stack);
+        return result;
     },
     validateCsrfTokens = function(event: APIGatewayProxyEvent): void {
-        
+
     };
 
 const indexGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {

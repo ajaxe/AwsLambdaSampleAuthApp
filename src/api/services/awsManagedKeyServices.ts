@@ -11,7 +11,7 @@ const kmsClient = new KMS({ apiVersion: 'latest' });
 const encryptedDataKey: string = process.env.dataKeyEnvVar;
 const csrfTokenLength = 32;
 const iv = new Buffer('76967d9d77f14dfa');
-let decryptedDataKey: string = '';
+let decryptedDataKey: Buffer = null;
 
 export type TokenParts = { prefix: string, salt: string, token: string };
 
@@ -21,8 +21,8 @@ export class CsrfTokenGenerator {
     readonly dataKey: Buffer;
     private csrfTokenPair: CsrfTokenPair;
 
-    constructor(dataKey: string, csrfTokenPair?: CsrfTokenPair) {
-        this.dataKey = Buffer.from(dataKey, 'base64');
+    constructor(dataKey: Buffer, csrfTokenPair?: CsrfTokenPair) {
+        this.dataKey = dataKey;
         this.csrfTokenPair = csrfTokenPair;
     }
     private parseToken(csrfToken: string): string {
@@ -49,7 +49,7 @@ export class CsrfTokenGenerator {
         return `${this.prefix};${salt};${token}`;
     }
     private getRandomToken(): string {
-        return crypto.randomBytes(csrfTokenLength).toString('base64');
+        return crypto.randomBytes(csrfTokenLength).toString('hex');
     }
     private encrypt(plaintText: string): string {
         let cipher = crypto.createCipheriv(this.algorithm, this.dataKey, iv);
@@ -83,25 +83,24 @@ export class AwsManagedKeyServices implements ManagedKeyServices {
 
     constructor(public configRepo: ConfigRepository) { }
 
-    private getDataKey(): Promise<string> {
+    private getDataKey(): Promise<Buffer> {
         if (!!decryptedDataKey) {
             console.log('getDataKey(): Returning cached key');
             return Promise.resolve(decryptedDataKey);
         }
-        return new Promise<string>(function (reject, resolve) {
+        return new Promise<Buffer>(function (resolve, reject) {
             kmsClient.decrypt({
                 CiphertextBlob: Buffer.from(encryptedDataKey, 'base64')
-            }, (err: AWSError, response: GenerateRandomResponse) => {
+            }, (err: AWSError, response: KMS.Types.GenerateRandomResponse) => {
                 let isbuffer = !!response ? Buffer.isBuffer(response.Plaintext) : false;
                 if (err || !isbuffer) {
                     decryptedDataKey = null;
                     let errString = !!err ? JSON.stringify(err) : 'Invalid plaintext type. Expect Buffer';
-                    console.error('Error getDataKey(): ' + errString);
-                    reject(errString);
+                    throw new Error('Error getDataKey(): ' + errString);
                 }
                 else {
                     let plainTextBuffer = <Buffer>response.Plaintext;
-                    decryptedDataKey = plainTextBuffer.toString('base64');
+                    decryptedDataKey = plainTextBuffer
                     console.log('getDataKey() completed. key length: ' + decryptedDataKey.length);
                     resolve(decryptedDataKey);
                 }
@@ -110,7 +109,8 @@ export class AwsManagedKeyServices implements ManagedKeyServices {
     }
 
     async validateCsrfTokens(tokenPair: CsrfTokenPair): Promise<boolean> {
-        let tokenGenerator = new CsrfTokenGenerator(await this.getDataKey(), tokenPair);
+        let key = await this.getDataKey();
+        let tokenGenerator = new CsrfTokenGenerator(key, tokenPair);
         let decryptedTokens = tokenGenerator.decryptCsrfTokens();
         return decryptedTokens.formToken === decryptedTokens.cookieToken;
     }
