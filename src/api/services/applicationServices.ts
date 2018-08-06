@@ -8,7 +8,7 @@ export class ApplicationServices {
     constructor(public userRepo: UserRepository,
         public keyServices: ManagedKeyServices) { }
 
-    async registerUser(registration: UserRegistration): Promise<void> {
+    async registerUser(registration: UserRegistration): Promise<User> {
         console.log(`registerUser: username = ${registration.username}`);
         let newUser = new User();
         let hash = this.keyServices.hashPassword(registration.password);
@@ -17,6 +17,6 @@ export class ApplicationServices {
             password: hash.getForStore(),
             active: true
         });
-        await this.userRepo.addUser(newUser);
+        return await this.userRepo.addUser(newUser);
     }
 }

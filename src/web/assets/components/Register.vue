@@ -57,15 +57,17 @@ export default class Register extends Vue {
         password: this.password,
         confirmPassword: this.confirmPassword
     });
-    if (form.checkValidity() === true && data.validate()) {
+    let r = data.validate();
+    if (form.checkValidity() === true && r.isValid()) {
         this.api.registerUser(data)
         .then(function(){
-            console.log('registered');
             self.$router.push({ name: RouteNames.Login });
         },
-        function(){
-            console.log('rejected');
-            alert('error registering');
+        function(message){
+            if(!message) {
+                message = 'Error registering user.';
+            }
+            alert(message);
         });
     }
     else {

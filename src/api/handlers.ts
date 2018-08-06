@@ -12,8 +12,8 @@ import { Cookie } from './types/cookies';
 import { ValidatableObject } from './types/validateableObject';
 import { UserRegistration } from './types/userRegistration';
 
-const domain='apps.apogee-dev.com', tokenExpireDays=10,
-    exceptionHandler = function(error: any, event: APIGatewayProxyEvent, responseProvider?: () => APIGatewayProxyResult): APIGatewayProxyResult {
+const domain = 'apps.apogee-dev.com', tokenExpireDays = 10,
+    exceptionHandler = function (error: any, event: APIGatewayProxyEvent, responseProvider?: () => APIGatewayProxyResult): APIGatewayProxyResult {
         let result: APIGatewayProxyResult = !!responseProvider ? responseProvider() : {
             statusCode: 500,
             body: "Internal Server Error"
@@ -22,39 +22,39 @@ const domain='apps.apogee-dev.com', tokenExpireDays=10,
         console.log('Global handler: ' + error.stack);
         return result;
     },
-    validateCsrfTokens = function(event: APIGatewayProxyEvent): void {
+    validateCsrfTokens = function (event: APIGatewayProxyEvent): void {
 
     },
-    validateModel = function<T extends ValidatableObject>(event: APIGatewayProxyEvent, ctor: new () => T): T {
+    validateModel = function <T extends ValidatableObject>(event: APIGatewayProxyEvent, ctor: new () => T): T {
         let model = new ctor();
         let jsonContentType = 'application/json';
         let isJsonContentType = event.headers['content-type'] === jsonContentType;
-        if(!isJsonContentType) {
+        if (!isJsonContentType) {
             throw new Error('Invalid content-type header. Expect: ' + jsonContentType);
         }
         Object.assign(model, JSON.parse(event.body));
         let validationResult = model.validate();
-        if(!validationResult.isValid) {
+        if (!validationResult.isValid) {
             throw new Error(JSON.stringify(validationResult));
         }
         console.log(`model valid. types: ${typeof model}`);
         return model;
     };
 
-const indexGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
+const indexGet: APIGatewayProxyHandler = async function (event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
     try {
         let response = await ObjectFactory.getFileServices().getIndexHtml(),
             cookies = new Cookie();
         cookies.setCookie(CsrfTokenPair.CsrfTokenCookieName,
-                response.csrfTokens.cookieToken,
-                tokenExpireDays,
-                domain);
+            response.csrfTokens.cookieToken,
+            tokenExpireDays,
+            domain);
         let result: APIGatewayProxyResult = {
-                statusCode: 200,
-                headers: Object.assign({}, response.headers, cookies.getHeader()),
-                body: response.body,
-                isBase64Encoded: response.isBase64Encoded
-            };
+            statusCode: 200,
+            headers: Object.assign({}, response.headers, cookies.getHeader()),
+            body: response.body,
+            isBase64Encoded: response.isBase64Encoded
+        };
         return result;
     }
     catch (err) {
@@ -62,7 +62,7 @@ const indexGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEv
     }
 };
 
-const assetGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
+const assetGet: APIGatewayProxyHandler = async function (event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
     try {
         let proxyParam = event.pathParameters['proxy'],
             response = await ObjectFactory.getFileServices().getAsset(proxyParam),
@@ -79,12 +79,12 @@ const assetGet: APIGatewayProxyHandler = async function(event: APIGatewayProxyEv
     }
 };
 
-const registerUser: APIGatewayProxyHandler = async function(event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
+const registerUser: APIGatewayProxyHandler = async function (event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
     let model: UserRegistration;
     try {
         model = validateModel(event, UserRegistration);
     }
-    catch(err){
+    catch (err) {
         return exceptionHandler(err, event, () => {
             return {
                 statusCode: 400,
@@ -92,15 +92,24 @@ const registerUser: APIGatewayProxyHandler = async function(event: APIGatewayPro
             };
         });
     }
-    try{
-        await ObjectFactory.getApplicationServices().registerUser(model);
+    try {
+        let newUser = await ObjectFactory.getApplicationServices().registerUser(model);
         return {
             statusCode: 201,
-            body: ""
+            body: JSON.stringify(newUser)
         };
     }
-    catch(err){
-        return exceptionHandler(err, event);
+    catch (err) {
+        let respPrv = null;
+        if (err.stack.indexOf('[Duplicate]') !== -1) {
+            respPrv = () => {
+                return {
+                    statusCode: 409,
+                    body: JSON.stringify({ message: "Duplicate user." })
+                };
+            }
+        }
+        return exceptionHandler(err, event, respPrv);
     }
 }
 
