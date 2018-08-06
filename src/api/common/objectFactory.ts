@@ -5,6 +5,7 @@ import { DynamoUserRepository } from "../repository/dynamoUserRepository";
 import { ManagedKeyServices, FileServices } from "../services/serviceInterfaces";
 import { AwsManagedKeyServices } from "../services/awsManagedKeyServices";
 import { HostFileServices } from "../services/hostedFileService";
+import { ApplicationServices } from "../services/applicationServices";
 
 export class ObjectFactory {
 
@@ -22,5 +23,9 @@ export class ObjectFactory {
 
     static getFileServices(): FileServices {
         return new HostFileServices(ObjectFactory.getManagedKeyServices());
+    }
+
+    static getApplicationServices() : ApplicationServices {
+        return new ApplicationServices(ObjectFactory.getUserRespository(), ObjectFactory.getManagedKeyServices());
     }
 }

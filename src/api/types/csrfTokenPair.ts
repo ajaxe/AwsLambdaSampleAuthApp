@@ -4,5 +4,5 @@ export class CsrfTokenPair {
     formToken: string;
 
     static readonly CsrfTokenCookieName: string = 'CRFS-TOKEN';
-    static readonly CsrfTokenHeader: string = 'X-CRFS-TOKEN';
+    static readonly CsrfTokenHeader: string = 'x-csrf-token';
 }

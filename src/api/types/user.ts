@@ -15,9 +15,7 @@ export class User {
     @attribute({ type: 'String', indexKeyConfigurations: { "username": "HASH" } })
     username: string;
     @attribute()
-    firstname: string;
-    @attribute()
-    lastname: string;
+    password: string;
     @attribute()
     active: boolean;
     @attribute({ memberType: embed(AuthToken) })

@@ -14,6 +14,7 @@ export class DynamoUserRepository implements UserRepository {
     }
 
     private async ensureUserTable(): Promise<void> {
+        console.log('ensureUserTable: user');
         return this.mapper.ensureTableExists(User, {
             readCapacityUnits: 5,
             writeCapacityUnits: 4,
@@ -58,6 +59,7 @@ export class DynamoUserRepository implements UserRepository {
 
     async addUser(user: User): Promise<User> {
         await this.ensureUserTable();
+        console.log(`addUser: username = ${user.username}`);
         let existing = await this.getUserByUsername(user.username);
         if(existing) {
             throw new Error(`[Duplicate] Username: ${user.username} already exists`);
@@ -66,7 +68,9 @@ export class DynamoUserRepository implements UserRepository {
         delete temp.userId;
         temp.created = new Date();
         let toSave = Object.assign(new User, temp);
-        return await this.mapper.put(toSave);
+        let saved = await this.mapper.put(toSave);
+        console.log(`addUser: completed. user id: ${saved.userId}`);
+        return saved;
     }
 
     async getUserById(userId: string): Promise<User> {
