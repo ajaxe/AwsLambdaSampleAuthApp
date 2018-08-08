@@ -11,9 +11,9 @@ import { ObjectFactory } from './common/objectFactory';
 import { Cookie } from './types/cookies';
 import { ValidatableObject } from './types/validateableObject';
 import { UserRegistration } from './types/userRegistration';
+import { LoginData } from './types/loginData';
+import { CommonConfig } from './common/config';
 
-const domain = 'apps.apogee-dev.com';
-const tokenExpireDays = 10;
 /**
  * Common exception handler to log and return default 500 status, if needed.
  *
@@ -25,10 +25,10 @@ const tokenExpireDays = 10;
 const exceptionHandler = function (error: any, event: APIGatewayProxyEvent, responseProvider?: () => APIGatewayProxyResult): APIGatewayProxyResult {
     let result: APIGatewayProxyResult = !!responseProvider ? responseProvider() : {
         statusCode: 500,
-        body: "Internal Server Error"
+        body: JSON.stringify({ message: "Internal Server Error" })
     };
+    console.log('Global_handler_error_stack -' + (error.stack || "[NONE]"));
     console.log(JSON.stringify({
-        'Global_handler_error_stack': error.stack || "[NONE]",
         'response': result,
         'api_gateway_event': event
     }));
@@ -81,19 +81,19 @@ const validateCsrfTokens = async function (event: APIGatewayProxyEvent): Promise
             formToken: tokenHeaderValue,
             cookieToken: tokenCookieValue
         })
-        .then(function (result) {
-            if (result) {
-                resolve(success);
-            }
-            else {
-                forbiddenResp.body = getBodyMessage('Invalid token');
-                reject(forbiddenResp);
-            }
-        })
-        .catch(function(err){
-            console.log('catch for validateCsrfTokens');
-            reject(err);
-        });
+            .then(function (result) {
+                if (result) {
+                    resolve(success);
+                }
+                else {
+                    forbiddenResp.body = getBodyMessage('Invalid token');
+                    reject(forbiddenResp);
+                }
+            })
+            .catch(function (err) {
+                console.log('catch for validateCsrfTokens');
+                reject(err);
+            });
     });
 };
 /**
@@ -135,8 +135,8 @@ const indexGet: APIGatewayProxyHandler = async function (event: APIGatewayProxyE
             cookies = new Cookie();
         cookies.setCookie(CsrfTokenPair.CsrfTokenCookieName,
             response.csrfTokens.cookieToken,
-            tokenExpireDays,
-            domain);
+            CommonConfig.tokenExpireDays,
+            CommonConfig.domain);
         let result: APIGatewayProxyResult = {
             statusCode: 200,
             headers: Object.assign({}, response.headers, cookies.getHeader()),
@@ -168,15 +168,10 @@ const assetGet: APIGatewayProxyHandler = async function (event: APIGatewayProxyE
 };
 
 const registerUser: APIGatewayProxyHandler = async function (event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
-    let model: UserRegistration;
-    let badCsrfResult: APIGatewayProxyResult = {
-        statusCode: 403,
-        body: JSON.stringify({ message: 'Invalid CSRF token' })
-    };
     /*
     Never reject in this promise, as we are handling unhanlded exceptions by returning status 500
     */
-    return new Promise<APIGatewayProxyResult>(function (resolve, reject) {
+    return new Promise<APIGatewayProxyResult>(function (resolve/*, reject*/) {
         // vlaidate csrf
         validateCsrfTokens(event)
             .then(function () {
@@ -205,7 +200,7 @@ const registerUser: APIGatewayProxyHandler = async function (event: APIGatewayPr
                         body: JSON.stringify({ message: "Duplicate user." })
                     });
                 }
-                if(hasStack) {
+                if (hasStack) {
                     fn = null;
                 }
                 resolve(exceptionHandler(err, event, fn));
@@ -213,4 +208,48 @@ const registerUser: APIGatewayProxyHandler = async function (event: APIGatewayPr
     });
 }
 
-export { indexGet, assetGet, registerUser }
+const loginUser: APIGatewayProxyHandler = async function (event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
+
+    return new Promise<APIGatewayProxyResult>(function (resolve/*, reject*/) {
+        validateCsrfTokens(event)
+            .then(function () {
+                //validate model
+                return validateModel(event, LoginData);
+            })
+            .then(function (data) {
+                //todo: check if there a vaid current session
+                //login user
+                let model = <LoginData>data;
+                return ObjectFactory.getApplicationServices().loginUser(model);
+            })
+            .then(function (loginResult) {
+                let authCookie = new Cookie();
+                let finalResult: APIGatewayProxyResult;
+                if (loginResult.isLoggedIn) {
+                    authCookie.setCookie(CommonConfig.authCookieName, loginResult.jwtToken, CommonConfig.tokenExpireDays, CommonConfig.domain);
+                    // send success response
+                    finalResult = {
+                        headers: authCookie.getHeader(),
+                        statusCode: 200,
+                        body: null
+                    };
+                }
+                else {
+                    authCookie.setCookie(CommonConfig.authCookieName, "", -CommonConfig.tokenExpireDays, CommonConfig.domain);
+                    finalResult = {
+                        headers: authCookie.getHeader(),
+                        statusCode: 401,
+                        body: null
+                    }
+                }
+                resolve(finalResult);
+            })
+            .catch(function (err) {
+                let hasStack = !!err['stack'];
+                let fn: () => APIGatewayProxyResult = !hasStack ? () => err : null;
+                resolve(exceptionHandler(err, event, fn));
+            });
+    });
+}
+
+export { indexGet, assetGet, registerUser, loginUser }

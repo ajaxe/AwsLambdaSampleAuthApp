@@ -29,7 +29,7 @@ export class DynamoUserRepository implements UserRepository {
         });
     }
 
-    private async getUserByUsername(username: string): Promise<User | null> {
+    async getUserByUsername(username: string): Promise<User | null> {
         let users: User[] = [];
         for await(const f of this.mapper.query(User, { username: username }, {
             indexName: username_idx,

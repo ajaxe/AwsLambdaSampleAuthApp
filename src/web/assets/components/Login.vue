@@ -40,18 +40,32 @@
 
 <script lang="ts">
 import { Vue, Component, Provide } from "vue-property-decorator";
+import { LoginData } from '../../../api/types/loginData';
+import { Api } from './api';
 
 @Component
 export default class Login extends Vue {
   @Provide() username: string = '';
   @Provide() password: string = '';
   @Provide() formValidated: boolean = false;
+  readonly api: Api = new Api();
 
   login(event: Event): void {
     let form  = <HTMLFormElement>this.$refs.loginForm;
     console.log(typeof form);
-    if(form.checkValidity() === false) {
-
+    let data: LoginData = Object.assign(new LoginData(), {
+        username: this.username,
+        password: this.password
+    });
+    let result = data.validate();
+    if(form.checkValidity() === true && result.isValid()) {
+        this.api.login(data)
+        .then(function(message){
+            alert(message);
+        })
+        .catch(function(message){
+            alert(message);
+        });
     }
     form.classList.add('was-validated');
     this.formValidated = true;

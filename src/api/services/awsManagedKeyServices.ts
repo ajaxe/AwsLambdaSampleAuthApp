@@ -1,34 +1,36 @@
 import { ManagedKeyServices } from './serviceInterfaces';
 import { CsrfTokenPair } from '../types/csrfTokenPair';
 import { KMS, AWSError } from 'aws-sdk'
-import { ConfigRepository } from '../repository/repositoryInterfaces';
-import { GenerateRandomResponse } from 'aws-sdk/clients/kms';
+import { AuthTokenRepository, UserRepository } from '../repository/repositoryInterfaces';
+const njwt = require('njwt');
 import crypto = require('crypto');
 import uuidv4 = require('uuid/v4');
 import { HashResult } from '../types/hashResult';
+import { User } from '../types/user';
+import { AuthToken } from '../types/authToken';
+import { CommonConfig } from '../common/config';
 
 
 const kmsClient = new KMS({ apiVersion: 'latest' });
 const encryptedDataKey: string = process.env.dataKeyEnvVar;
-const csrfTokenLength = 32;
 const iv = new Buffer('76967d9d77f14dfa');
 const algorithm = 'aes-256-ctr';
 let decryptedDataKey: Buffer = null;
 
-const encrypt = function(plaintText: string, dataKey: Buffer): string {
+const encrypt = function (plaintText: string, dataKey: Buffer): string {
     let cipher = crypto.createCipheriv(algorithm, dataKey, iv);
     let crypted = cipher.update(plaintText, 'utf8', 'base64');
     crypted += cipher.final('base64');
     return crypted;
 };
-const decrypt = function(cipherText: string, dataKey: Buffer) {
+const decrypt = function (cipherText: string, dataKey: Buffer) {
     let decipher = crypto.createDecipheriv(algorithm, dataKey, iv);
     let decrypted = decipher.update(cipherText, 'base64', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;
 };
-const getRandomToken = function(): string {
-    return crypto.randomBytes(csrfTokenLength).toString('hex');
+const getRandomToken = function (): string {
+    return crypto.randomBytes(CommonConfig.csrfTokenLength).toString('hex');
 }
 
 export type TokenParts = { prefix: string, salt: string, token: string };
@@ -84,9 +86,10 @@ export class CsrfTokenGenerator {
 }
 export class AwsManagedKeyServices implements ManagedKeyServices {
 
-    constructor(public configRepo: ConfigRepository) { }
+    constructor(public authTokenRepo: AuthTokenRepository,
+    public userRepo: UserRepository) { }
 
-    private getDataKey(): Promise<Buffer> {
+    getDataKey(): Promise<Buffer> {
         if (!!decryptedDataKey) {
             console.log('getDataKey(): Returning cached key');
             return Promise.resolve(decryptedDataKey);
@@ -111,10 +114,11 @@ export class AwsManagedKeyServices implements ManagedKeyServices {
         });
     }
 
-    private createHash(plainText: string, salt: string) {
+    createHash(plainText: string, salt: string) {
         const hash = crypto.createHash('sha256');
         hash.update(`${plainText}${salt}`);
-        return hash.digest('base64');
+        let digest = hash.digest('base64');
+        return digest;
     }
 
     async validateCsrfTokens(tokenPair: CsrfTokenPair): Promise<boolean> {
@@ -144,8 +148,71 @@ export class AwsManagedKeyServices implements ManagedKeyServices {
      * @param hashedPassword {string} Hashed password check against
      */
     verifyPassword(plaintTextPassword: string, hashedPassword: string): boolean {
+        console.log('Verifying password');
         let storeHash = HashResult.parse(hashedPassword);
         let currentHash: string = this.createHash(plaintTextPassword, storeHash.salt);
-        return currentHash === storeHash.hashedValue;
+        let match = currentHash === storeHash.hashedValue;
+        console.log('Verifying password: calculated & stored hash match? ' + match);
+        return match;
+    }
+
+    async createAuthToken(user: User): Promise<AuthToken> {
+        let expireDt = new Date();
+        let newAuthToken = new AuthToken();
+        let claims = {
+            sub: user.userId,
+            iss: CommonConfig.appUrl,
+            username: user.username
+        }
+        console.log('setting jwt claims: ' + JSON.stringify(claims));
+        let jwt = njwt.create(claims, await this.getDataKey());
+        expireDt.setDate(expireDt.getDate() + CommonConfig.tokenExpireDays);
+        jwt.setExpiration(expireDt.getTime());
+        jwt.setNotBefore(new Date().getTime());
+        console.log('jwt body: ' + JSON.stringify(jwt.body));
+        newAuthToken.tokenId = jwt.body.jti;
+        newAuthToken.tokenValue = jwt.compact();
+        newAuthToken.expire = expireDt;
+        let savedToken = await this.authTokenRepo.addAuthToken(newAuthToken);
+        console.log('saved token id: ' + savedToken.tokenId);
+        return savedToken;
+    }
+
+    async verifyJwt(token: string): Promise<any> {
+        let dataKey = await this.getDataKey();
+        return new Promise(function (resolve, reject) {
+            njwt.verify(token, dataKey, function (err: any, verifiedJwt: any) {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(verifiedJwt);
+                }
+            });
+        });
+    }
+
+    async verifyAuthToken(token: string): Promise<boolean> {
+        let self = this;
+        return new Promise<boolean>(function (resolve, reject) {
+            let p1 = self.verifyJwt(token);
+            let p2 = p1.then(function (jwt) {
+                let userId = jwt.body.sub;
+                return self.userRepo.getUserById(userId);
+            })
+            let p3 = p1.then(function(jwt){
+                return self.authTokenRepo.getAuthToken(jwt.body.jti)
+            });
+            Promise.all([p2, p3])
+            .then(function(value: [User, AuthToken]) {
+                // check user is active
+                let user: User = value[0];
+                let authToken = value[1];
+                resolve(user.active && !!authToken && !authToken.isExpired());
+            })
+            .catch(function (err) {
+                reject(err);
+            });
+        });
     }
 }

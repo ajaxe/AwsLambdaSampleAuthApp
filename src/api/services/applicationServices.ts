@@ -2,6 +2,8 @@ import { UserRegistration } from "../types/userRegistration";
 import { UserRepository } from "../repository/repositoryInterfaces";
 import { User } from "../types/user";
 import { ManagedKeyServices } from "./serviceInterfaces";
+import { LoginData } from "../types/loginData";
+import { LoginResult } from "../types/loginResult";
 
 export class ApplicationServices {
 
@@ -18,5 +20,22 @@ export class ApplicationServices {
             active: true
         });
         return await this.userRepo.addUser(newUser);
+    }
+
+    async loginUser(loginData: LoginData): Promise<LoginResult> {
+        let user = await this.userRepo.getUserByUsername(loginData.username);
+        let result = new LoginResult();
+        console.log(`Looking for username: ${loginData.username}, found? ${!!user}`);
+        if(!user) {
+            result.isLoggedIn = false;
+            return result;
+        }
+        let verified =  this.keyServices.verifyPassword(loginData.password, user.password);
+        result.isLoggedIn = verified;
+        if(verified) {
+            let authToken = await this.keyServices.createAuthToken(user);
+            result.jwtToken = authToken.tokenValue;
+        }
+        return result;
     }
 }

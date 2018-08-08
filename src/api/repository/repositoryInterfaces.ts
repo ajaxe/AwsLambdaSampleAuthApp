@@ -1,5 +1,6 @@
 import { User } from '../types/user';
 import { Config } from '../types/config';
+import { AuthToken } from '../types/authToken';
 
 export interface UserRepository {
 
@@ -8,6 +9,8 @@ export interface UserRepository {
     addUser(user: User): Promise<User>;
 
     getUserById(userId: string): Promise<User>;
+
+    getUserByUsername(username: string): Promise<User | null>;
 }
 
 export interface ConfigRepository {
@@ -17,4 +20,11 @@ export interface ConfigRepository {
     setConfiguration(config: Config): Promise<Config>;
 
     addConfiguration(config: Config): Promise<Config>;
+}
+
+export interface AuthTokenRepository {
+
+    addAuthToken(authToken: AuthToken): Promise<AuthToken>;
+
+    getAuthToken(authTokenId: string): Promise<AuthToken>;
 }
