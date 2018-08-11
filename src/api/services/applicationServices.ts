@@ -1,14 +1,17 @@
 import { UserRegistration } from "../types/userRegistration";
-import { UserRepository } from "../repository/repositoryInterfaces";
+import { UserRepository, AuthTokenRepository } from "../repository/repositoryInterfaces";
 import { User } from "../types/user";
 import { ManagedKeyServices } from "./serviceInterfaces";
 import { LoginData } from "../types/loginData";
 import { LoginResult } from "../types/loginResult";
+import { AuthVerificationResult, AuthResultData } from "../types/authVerficationResult";
 
 export class ApplicationServices {
 
     constructor(public userRepo: UserRepository,
-        public keyServices: ManagedKeyServices) { }
+        public keyServices: ManagedKeyServices,
+        public authRepo: AuthTokenRepository
+    ) { }
 
     async registerUser(registration: UserRegistration): Promise<User> {
         console.log(`registerUser: username = ${registration.username}`);
@@ -37,5 +40,12 @@ export class ApplicationServices {
             result.jwtToken = authToken.tokenValue;
         }
         return result;
+    }
+
+    logoutUser(authVerificationResult: AuthResultData): Promise<boolean> {
+        return this.authRepo.deleteAuthToken(authVerificationResult.authTokenId)
+        .then(function() {
+            return Promise.resolve(true);
+        });
     }
 }

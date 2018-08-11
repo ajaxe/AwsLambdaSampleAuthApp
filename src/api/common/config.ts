@@ -4,6 +4,8 @@ export const CommonConfig = {
      */
     domain: 'apps.apogee-dev.com',
     appUrl: 'https://apps.apogee-dev.com/auth-app-lambda/',
+
+    cookiePath: '/auth-app-lambda',
     /**
      * Lifetime of the token.
      */

@@ -3,6 +3,7 @@ import { CsrfTokenPair } from '../types/csrfTokenPair';
 import { HashResult } from '../types/hashResult';
 import { AuthToken } from '../types/authToken';
 import { User } from '../types/user';
+import { AuthVerificationResult } from '../types/authVerficationResult';
 
 export interface FileServices {
     getIndexHtml(): Promise<AssetResponse>;
@@ -26,5 +27,5 @@ export interface ManagedKeyServices {
 
     createAuthToken(user: User): Promise<AuthToken>;
 
-    verifyAuthToken(toke: string): Promise<boolean>;
+    verifyAuthToken(toke: string): Promise<AuthVerificationResult>;
 }

@@ -64,6 +64,11 @@ export class HostFileServices implements FileServices {
     }
 
     async getAsset(fileKey: string): Promise<AssetResponse> {
+        if(fileKey && fileKey.endsWith('.map')) {
+            let parts = fileKey.split('/');
+            parts.shift();
+            fileKey = parts.join('/');
+        }
         let request: S3.Types.GetObjectRequest = {
             Bucket: appBucketName,
             Key: `assets/${fileKey}`

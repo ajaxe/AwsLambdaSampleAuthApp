@@ -13,6 +13,7 @@ import { ValidatableObject } from './types/validateableObject';
 import { UserRegistration } from './types/userRegistration';
 import { LoginData } from './types/loginData';
 import { CommonConfig } from './common/config';
+import { AuthVerificationResult, AuthResultData } from './types/authVerficationResult';
 
 /**
  * Common exception handler to log and return default 500 status, if needed.
@@ -81,19 +82,19 @@ const validateCsrfTokens = async function (event: APIGatewayProxyEvent): Promise
             formToken: tokenHeaderValue,
             cookieToken: tokenCookieValue
         })
-            .then(function (result) {
-                if (result) {
-                    resolve(success);
-                }
-                else {
-                    forbiddenResp.body = getBodyMessage('Invalid token');
-                    reject(forbiddenResp);
-                }
-            })
-            .catch(function (err) {
-                console.log('catch for validateCsrfTokens');
-                reject(err);
-            });
+        .then(function (result) {
+            if (result) {
+                resolve(success);
+            }
+            else {
+                forbiddenResp.body = getBodyMessage('Invalid token');
+                reject(forbiddenResp);
+            }
+        })
+        .catch(function (err) {
+            console.log('catch for validateCsrfTokens');
+            reject(err);
+        });
     });
 };
 /**
@@ -206,7 +207,7 @@ const registerUser: APIGatewayProxyHandler = async function (event: APIGatewayPr
                 resolve(exceptionHandler(err, event, fn));
             });
     });
-}
+};
 
 const loginUser: APIGatewayProxyHandler = async function (event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
 
@@ -226,20 +227,20 @@ const loginUser: APIGatewayProxyHandler = async function (event: APIGatewayProxy
                 let authCookie = new Cookie();
                 let finalResult: APIGatewayProxyResult;
                 if (loginResult.isLoggedIn) {
-                    authCookie.setCookie(CommonConfig.authCookieName, loginResult.jwtToken, CommonConfig.tokenExpireDays, CommonConfig.domain);
+                    authCookie.setCookie(CommonConfig.authCookieName, loginResult.jwtToken, CommonConfig.tokenExpireDays, CommonConfig.domain, false);
                     // send success response
                     finalResult = {
                         headers: authCookie.getHeader(),
                         statusCode: 200,
-                        body: null
+                        body: JSON.stringify({ message: 'Login successful'})
                     };
                 }
                 else {
-                    authCookie.setCookie(CommonConfig.authCookieName, "", -CommonConfig.tokenExpireDays, CommonConfig.domain);
+                    authCookie.setCookie(CommonConfig.authCookieName, "", -CommonConfig.tokenExpireDays, CommonConfig.domain, false);
                     finalResult = {
                         headers: authCookie.getHeader(),
                         statusCode: 401,
-                        body: null
+                        body: JSON.stringify({ message: 'Unauthorize'})
                     }
                 }
                 resolve(finalResult);
@@ -250,6 +251,43 @@ const loginUser: APIGatewayProxyHandler = async function (event: APIGatewayProxy
                 resolve(exceptionHandler(err, event, fn));
             });
     });
+};
+
+const logoutUser: APIGatewayProxyHandler = async function (event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
+    let authCookie = new Cookie();
+    let finalResult: APIGatewayProxyResult;
+    authCookie.setCookie(CommonConfig.authCookieName, "", -CommonConfig.tokenExpireDays, CommonConfig.domain, false);
+    return new Promise<APIGatewayProxyResult>(function (resolve/*, reject*/) {
+        validateCsrfTokens(event)
+            .then(function (data) {
+                //todo: check if there a vaid current session
+                //login user
+                let authContext = <AuthResultData>event.requestContext.authorizer;
+                return ObjectFactory.getApplicationServices().logoutUser(authContext);
+            })
+            .then(function (loggedOut) {
+                finalResult = {
+                    headers: authCookie.getHeader(),
+                    statusCode: 200,
+                    body: JSON.stringify({ message: 'Logout completed '})
+                }
+                resolve(finalResult);
+            })
+            .catch(function (err) {
+                let hasStack = !!err['stack'];
+                let fn: () => APIGatewayProxyResult = !hasStack ? () => err : null;
+                let finalResult = exceptionHandler(err, event, fn);
+                finalResult.headers = authCookie.getHeader();
+                resolve(finalResult);
+            });
+    });
+};
+
+const checkUserSession: APIGatewayProxyHandler = function(event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
+    callback(null, {
+        statusCode: 200,
+        body: JSON.stringify({ message: "valid session" })
+    });
 }
 
-export { indexGet, assetGet, registerUser, loginUser }
+export { indexGet, assetGet, registerUser, loginUser, logoutUser, checkUserSession }

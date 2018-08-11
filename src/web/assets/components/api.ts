@@ -1,11 +1,14 @@
 import { UserRegistration } from '../../../api/types/userRegistration';
 import { LoginData } from '../../../api/types/loginData';
 import $ from 'jquery';
+import cookie from 'cookie';
 
 const registerUrl = 'user/register';
 const sessionUrl = 'user/session';
 const loginUrl = 'user/login';
+const logoutUrl = 'user/logout';
 const tokenHeaderName = "X-CSRF-TOKEN";
+const authTokenName = 'auth_token';
 let requestToken: string = '';
 export class Api {
 
@@ -14,6 +17,26 @@ export class Api {
             requestToken = <string>$('#__RequestToken').val();
         }
         return requestToken;
+    }
+
+    private getAuthTokenFromCookie(): string {
+        let ck = document.cookie;
+        let ckJar: { [key: string]: string } ={};
+        ck.replace(
+            new RegExp("([^?=;]+)(=([^;]*))?", "g"),
+            function($0: string, $1: string, $2: string, $3: string) {
+                ckJar[$1.trim()] = $3 ? $3.trim(): $3;
+                return '';
+            }
+        );
+        let token = ckJar[authTokenName];
+        if(!token) {
+            console.log(`${authTokenName} not available`);
+        }
+        else {
+            console.log(`${authTokenName} available`);
+        }
+        return token;
     }
 
     registerUser(registerData: UserRegistration): Promise<string | null> {
@@ -59,18 +82,28 @@ export class Api {
     }
 
     checkUserSession(): Promise<boolean> {
-        return new Promise<boolean>(function (resolve, reject) {
+        let self = this;
+        return new Promise<boolean>(function (resolve/*, reject*/) {
+            let headers: { [key: string]: string } = {}, authToken = self.getAuthTokenFromCookie();
+            if(authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+            else {
+                resolve(false);
+                return;
+            }
             $.get({
-                url: sessionUrl
+                url: sessionUrl,
+                headers: headers
             })
-                .then(function () {
-                    return resolve();
-                })
-                .catch(function () {
-                    console.log(arguments);
-                    return reject();
-                });
-        })
+            .then(function () {
+                resolve(true);
+            })
+            .catch(function () {
+                console.log(arguments);
+                resolve(false);
+            });
+        });
     }
 
     login(loginData: LoginData): Promise<string | null> {
@@ -90,7 +123,7 @@ export class Api {
                     headers: headers,
                     statusCode: {
                         200: function () {
-                            resolve('Login successfull');
+                            resolve();
                         },
                         401: function(){
                             reject('Incorrect username or password.');
@@ -110,5 +143,28 @@ export class Api {
                 });
             });
         }
+    }
+
+    logout(): Promise<any> {
+        let self = this;
+        return new Promise<any>(function(resolve/*, reject*/){
+            let headers: { [key: string]: string } = {},
+                authToken = self.getAuthTokenFromCookie();
+            if(authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            };
+            headers[tokenHeaderName] = self.getRequestHeaderToken();
+            $.post({
+                url: logoutUrl,
+                headers: headers
+            })
+            .then(function(){
+                resolve();
+            })
+            .catch(function(){
+                console.log(arguments);
+                resolve();
+            })
+        });
     }
 }

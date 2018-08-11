@@ -9,6 +9,7 @@ import { HashResult } from '../types/hashResult';
 import { User } from '../types/user';
 import { AuthToken } from '../types/authToken';
 import { CommonConfig } from '../common/config';
+import { AuthVerificationResult } from '../types/authVerficationResult';
 
 
 const kmsClient = new KMS({ apiVersion: 'latest' });
@@ -94,7 +95,10 @@ export class AwsManagedKeyServices implements ManagedKeyServices {
             console.log('getDataKey(): Returning cached key');
             return Promise.resolve(decryptedDataKey);
         }
-        return new Promise<Buffer>(function (resolve, reject) {
+        if(!encryptedDataKey) {
+            throw new Error('Missing encrypted data-key in environment configuation');
+        }
+        return new Promise<Buffer>(function (resolve/*, reject*/) {
             kmsClient.decrypt({
                 CiphertextBlob: Buffer.from(encryptedDataKey, 'base64')
             }, (err: AWSError, response: KMS.Types.GenerateRandomResponse) => {
@@ -192,23 +196,45 @@ export class AwsManagedKeyServices implements ManagedKeyServices {
         });
     }
 
-    async verifyAuthToken(token: string): Promise<boolean> {
+    async verifyAuthToken(token: string): Promise<AuthVerificationResult> {
         let self = this;
-        return new Promise<boolean>(function (resolve, reject) {
+        return new Promise<AuthVerificationResult>(function (resolve, reject) {
             let p1 = self.verifyJwt(token);
             let p2 = p1.then(function (jwt) {
                 let userId = jwt.body.sub;
+                console.log(`finding user by id: ${userId}`);
                 return self.userRepo.getUserById(userId);
             })
             let p3 = p1.then(function(jwt){
-                return self.authTokenRepo.getAuthToken(jwt.body.jti)
+                console.log(`finding token id: ${jwt.body.jti}`);
+                return self.authTokenRepo.getAuthToken(jwt.body.jti);
             });
             Promise.all([p2, p3])
             .then(function(value: [User, AuthToken]) {
                 // check user is active
                 let user: User = value[0];
                 let authToken = value[1];
-                resolve(user.active && !!authToken && !authToken.isExpired());
+                console.log('Validating user & auth token results');
+                if(!user) {
+                    console.log('invalid user');
+                }
+                else if(!user.active) {
+                    console.log(`User id: ${user.userId} is not active`);
+                }
+                if(!authToken) {
+                    console.log('auth token not in store');
+                }
+                else if(authToken.isExpired()) {
+                    console.log(`auth toke expired at: ${authToken.expire}`);
+                }
+                let isValid = !!user && user.active && !!authToken && !authToken.isExpired();
+                console.log('Validation result: ' + isValid);
+                let result = new AuthVerificationResult();
+                result.tokenValid =isValid;
+                result.user = user;
+                result.authToken = authToken;
+
+                resolve(result);
             })
             .catch(function (err) {
                 reject(err);

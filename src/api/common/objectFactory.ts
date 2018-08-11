@@ -28,7 +28,9 @@ export class ObjectFactory {
     }
 
     static getApplicationServices() : ApplicationServices {
-        return new ApplicationServices(ObjectFactory.getUserRespository(), ObjectFactory.getManagedKeyServices());
+        return new ApplicationServices(ObjectFactory.getUserRespository(),
+            ObjectFactory.getManagedKeyServices(),
+            ObjectFactory.getAuthTokenRepository());
     }
 
     static getAuthTokenRepository(): AuthTokenRepository {

@@ -1,12 +1,10 @@
-import { expect, assert, should } from 'chai';
+import { expect, assert } from 'chai';
 import 'mocha';
-import { TokenParts, AwsManagedKeyServices, CsrfTokenGenerator } from './awsManagedKeyServices';
+import { AwsManagedKeyServices, CsrfTokenGenerator } from './awsManagedKeyServices';
 import { CsrfTokenPair } from '../types/csrfTokenPair';
 import { ObjectFactory } from '../common/objectFactory';
 import { AuthTokenRepository, UserRepository } from '../repository/repositoryInterfaces';
 import { AuthToken } from '../types/authToken';
-import { doesNotReject } from 'assert';
-import { ItemIterator } from '../../../node_modules/@aws/dynamodb-query-iterator/build/ItemIterator';
 import { User } from '../types/user';
 
 const dummyDataKey = new Buffer('2948404D635166546A576E5A7234753778217A25432A462D4A614E645267556B', 'hex');

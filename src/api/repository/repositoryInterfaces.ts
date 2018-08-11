@@ -27,4 +27,6 @@ export interface AuthTokenRepository {
     addAuthToken(authToken: AuthToken): Promise<AuthToken>;
 
     getAuthToken(authTokenId: string): Promise<AuthToken>;
+
+    deleteAuthToken(authTokenId: string): Promise<AuthToken>;
 }
