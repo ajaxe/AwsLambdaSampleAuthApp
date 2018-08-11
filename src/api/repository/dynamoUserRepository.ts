@@ -8,14 +8,18 @@ const username_idx = "username";
 export class DynamoUserRepository implements UserRepository {
 
     private readonly mapper: DataMapper;
+    private static tableCreated: Promise<void>;
 
     constructor(mapper: DataMapper) {
         this.mapper = mapper;
     }
 
     private async ensureUserTable(): Promise<void> {
+        if(DynamoUserRepository.tableCreated) {
+            return DynamoUserRepository.tableCreated;
+        }
         console.log('ensureUserTable: user');
-        return this.mapper.ensureTableExists(User, {
+        DynamoUserRepository.tableCreated = this.mapper.ensureTableExists(User, {
             readCapacityUnits: 5,
             writeCapacityUnits: 4,
             indexOptions: {
@@ -27,6 +31,7 @@ export class DynamoUserRepository implements UserRepository {
                 }
             }
         });
+        return DynamoUserRepository.tableCreated;
     }
 
     async getUserByUsername(username: string): Promise<User | null> {
@@ -70,6 +75,19 @@ export class DynamoUserRepository implements UserRepository {
         let toSave = Object.assign(new User, temp);
         let saved = await this.mapper.put(toSave);
         console.log(`addUser: completed. user id: ${saved.userId}`);
+        return saved;
+    }
+
+    async updateUser(user: User): Promise<User> {
+        await this.ensureUserTable();
+        console.log(`updateUser: username = ${user.username}`);
+        let existing = await this.getUserById(user.userId);
+        if(!existing) {
+            User.DoesNotExist(user.userId);
+        }
+        let toSave = Object.assign(new User, user);
+        let saved = await this.mapper.update(toSave);
+        console.log(`updateUser: completed. user id: ${saved.userId}`);
         return saved;
     }
 
