@@ -1,7 +1,9 @@
 import { UserRegistration } from '../../../api/types/userRegistration';
 import { LoginData } from '../../../api/types/loginData';
+import { User } from '../../../api/types/user';
 import $ from 'jquery';
-import cookie from 'cookie';
+
+type AjaxHeaders = { [key: string]: string };
 
 const registerUrl = 'user/register';
 const sessionUrl = 'user/session';
@@ -37,6 +39,15 @@ export class Api {
             console.log(`${authTokenName} available`);
         }
         return token;
+    }
+
+    private getAuthHeader(): AjaxHeaders {
+        let headers: AjaxHeaders = {},
+            authToken = this.getAuthTokenFromCookie();
+        if(authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        return headers;
     }
 
     registerUser(registerData: UserRegistration): Promise<string | null> {
@@ -85,11 +96,8 @@ export class Api {
         let self = this;
         return new Promise<boolean>(function (resolve/*, reject*/) {
             resolve(true); return;
-            let headers: { [key: string]: string } = {}, authToken = self.getAuthTokenFromCookie();
-            if(authToken) {
-                headers['Authorization'] = `Bearer ${authToken}`;
-            }
-            else {
+            let headers: AjaxHeaders = self.getAuthHeader();
+            if(!headers) {
                 resolve(false);
                 return;
             }
@@ -115,7 +123,7 @@ export class Api {
         }
         else {
             return new Promise(function (resolve, reject) {
-                let headers: { [key: string]: string } = {};
+                let headers: AjaxHeaders = {};
                 headers[tokenHeaderName] = self.getRequestHeaderToken();
                 $.post({
                     url: loginUrl,
@@ -149,11 +157,7 @@ export class Api {
     logout(): Promise<any> {
         let self = this;
         return new Promise<any>(function(resolve/*, reject*/){
-            let headers: { [key: string]: string } = {},
-                authToken = self.getAuthTokenFromCookie();
-            if(authToken) {
-                headers['Authorization'] = `Bearer ${authToken}`;
-            };
+            let headers: AjaxHeaders = self.getAuthHeader();
             headers[tokenHeaderName] = self.getRequestHeaderToken();
             $.post({
                 url: logoutUrl,
@@ -176,5 +180,11 @@ export class Api {
         }
         let payload = JSON.parse(atob(token.split('.')[1]));
         return payload.jti;
+    }
+
+    getUsers(): Promise<User[]> {
+        return new Promise<User[]>(function(resolve, /*reject*/){
+            
+        });
     }
 }

@@ -3,7 +3,9 @@
 custom:
   serviceName: SampleAuthentication
   dataKey: ${file(dataKey.yml):dataKey}
-
+  apigwBinary:
+    types:
+      - '*/*'
 service:
   name: ${self:custom.serviceName}
   awsKmsKeyArn: arn:aws:kms:us-east-1:257953708933:key/b9cb1425-986a-4aec-9a83-72cdc6dba044
@@ -187,3 +189,4 @@ plugins:
   - custom-serverless-plugin-include-dependencies
   - serverless-dynamodb-local
   - serverless-offline
+  - serverless-apigw-binary

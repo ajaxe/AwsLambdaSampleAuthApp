@@ -3,7 +3,7 @@
         <h2>User Sessions <span class="badge smaller badge-pill badge-secondary">Current Session: <span v-text="sessionId"></span></span></h2>
         <div class="row">
             <div class="col-sm-6 col-md-8  order-2 order-md-1">
-                <p>List comes here</p>
+                <user-list></user-list>
             </div>
             <div class="col-sm-6 col-md-4 order-1 order-md-2">
                 <div class="alert alert-info" role="alert">
@@ -38,6 +38,7 @@ import { Vue, Component, Provide } from "vue-property-decorator";
 import { Route, RawLocation } from "vue-router";
 import { Api } from "./api";
 import { RouteNames } from "../routes";
+import UserList from './UserList.vue';
 
 @Component({
   beforeRouteEnter: (
@@ -57,8 +58,10 @@ import { RouteNames } from "../routes";
   },
   mounted: function() {
     console.log("home-mounted");
+    console.log(this);
     this.$eventBus.$emit("home-mounted");
-  }
+  },
+  components: { UserList }
 })
 export default class Home extends Vue {
     @Provide() sessionId: string;

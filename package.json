@@ -13,6 +13,7 @@
   "author": "Ajay sharma <ajay.sharma1984@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "@fortawesome/fontawesome-free": "^5.2.0",
     "@types/aws-lambda": "^8.10.9",
     "@types/aws4": "^1.5.1",
     "@types/chai": "^4.1.4",
@@ -31,6 +32,7 @@
     "posthtml": "^0.11.3",
     "precinct": "^4.2.0",
     "serverless": "^1.29.2",
+    "serverless-apigw-binary": "^0.4.4",
     "serverless-dynamodb-local": "^0.2.30",
     "serverless-offline": "^3.25.6",
     "serverless-plugin-include-dependencies": "^3.1.1",
