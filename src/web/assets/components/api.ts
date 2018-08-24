@@ -184,7 +184,21 @@ export class Api {
 
     getUsers(): Promise<User[]> {
         return new Promise<User[]>(function(resolve, /*reject*/){
-            
+            let users: User[] = [{
+                userId: '1',
+                username: 'a 1',
+                created: new Date(),
+                active: true,
+                password: '',
+                tokens: [{
+                    tokenId: '12345',
+                    tokenValue: '',
+                    created: new Date(),
+                    expire: new Date(),
+                    isExpired: function(): boolean { return true; }
+                }]
+            }];
+            resolve(users);
         });
     }
 }

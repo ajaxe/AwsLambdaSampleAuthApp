@@ -2,43 +2,37 @@
   <div id="user-list">
     <button @click="getMore()"> Get More</button>
     <p v-if="isLoading">Loading data</p>
-    <ul>
-      <li v-for="(index, u) in users" :key="u">
-        {{index}} - {{u}}
-      </li>
-    </ul>
+    <user-list-item v-for="(u, key) in users" :key="key" v-bind:user="u">
+    </user-list-item>
   </div>
 </template>
 
 <script lang="ts">
 import { Vue, Component, Provide } from "vue-property-decorator";
 import { Api } from "./api";
+import { User } from '../../../api/types/user';
+import UserListItem from './UserListItem.vue';
 
 @Component({
   mounted: function() {
     let userListVue = <UserList>this;
     userListVue.loadUsers();
-  }
+  },
+  components: { UserListItem }
 })
 export default class UserList extends Vue {
-  @Provide() users: string[] = [];
+  @Provide() users: User[] = [];
   @Provide() isLoading: boolean = true;
 
   readonly api: Api = new Api();
 
-  constructor() {
-    super();
-  }
-
   loadUsers() {
     let self = this;
-    setTimeout(function() {
-      self.$nextTick(function() {
-        Array.prototype.push.apply(self.users, ["a", "b", "c"]);
-        console.log("users updated");
-        self.isLoading = false;
-      });
-    }, 3000);
+    self.api.getUsers()
+    .then(function(users){
+      self.users = users;
+      self.isLoading = false;
+    });
   }
 }
 </script>

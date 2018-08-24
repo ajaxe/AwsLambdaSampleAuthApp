@@ -2,10 +2,10 @@
     <div class="home-root container-fluid">
         <h2>User Sessions <span class="badge smaller badge-pill badge-secondary">Current Session: <span v-text="sessionId"></span></span></h2>
         <div class="row">
-            <div class="col-sm-6 col-md-8  order-2 order-md-1">
+            <div class="col-sm-6 col-md-8  order-2 order-sm-1">
                 <user-list></user-list>
             </div>
-            <div class="col-sm-6 col-md-4 order-1 order-md-2">
+            <div class="col-sm-6 col-md-4 order-1 order-sm-2">
                 <div class="alert alert-info" role="alert">
                     <h5 class="card-title">Info card title</h5>
                     <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
