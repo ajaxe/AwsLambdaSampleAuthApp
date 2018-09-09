@@ -177,7 +177,7 @@ export class AwsManagedKeyServices implements ManagedKeyServices {
         newAuthToken.tokenId = jwt.body.jti;
         newAuthToken.tokenValue = jwt.compact();
         newAuthToken.expire = expireDt;
-        let savedToken = await this.authTokenRepo.addAuthToken(newAuthToken);
+        let savedToken = await this.authTokenRepo.addAuthToken(user.userId, newAuthToken);
         console.log('saved token id: ' + savedToken.tokenId);
         return savedToken;
     }
@@ -199,27 +199,31 @@ export class AwsManagedKeyServices implements ManagedKeyServices {
     async verifyAuthToken(token: string): Promise<AuthVerificationResult> {
         let self = this;
         return new Promise<AuthVerificationResult>(function (resolve, reject) {
-            let p1 = self.verifyJwt(token);
-            let p2 = p1.then(function (jwt) {
+            let p1 = self.verifyJwt(token)
+            .then(function (jwt) {
                 let userId = jwt.body.sub;
                 console.log(`finding user by id: ${userId}`);
-                return self.userRepo.getUserById(userId);
+                let userPromise = self.userRepo.getUserById(userId);
+                return Promise.all([userPromise, Promise.resolve(jwt)]);
             })
-            let p3 = p1.then(function(jwt){
-                console.log(`finding token id: ${jwt.body.jti}`);
-                return self.authTokenRepo.getAuthToken(jwt.body.jti);
-            });
-            Promise.all([p2, p3])
-            .then(function(value: [User, AuthToken]) {
-                // check user is active
+            .then(function(value: [User, any]) {
+                let jwt = value[1];
                 let user: User = value[0];
-                let authToken = value[1];
+                console.log(`finding token id: ${jwt.body.jti}`);
+                // check user is active
+
                 console.log('Validating user & auth token results');
                 if(!user) {
                     console.log('invalid user');
                 }
                 else if(!user.active) {
                     console.log(`User id: ${user.userId} is not active`);
+                }
+                let authToken: AuthToken = null;
+                if(user.tokens) {
+                    authToken = user.tokens.filter(function(t){
+                        return t.tokenId === jwt.body.jti;
+                    }).pop();
                 }
                 if(!authToken) {
                     console.log('auth token not in store');
@@ -230,13 +234,13 @@ export class AwsManagedKeyServices implements ManagedKeyServices {
                 let isValid = !!user && user.active && !!authToken && !authToken.isExpired();
                 console.log('Validation result: ' + isValid);
                 let result = new AuthVerificationResult();
-                result.tokenValid =isValid;
+                result.tokenValid = isValid;
                 result.user = user;
                 result.authToken = authToken;
-
                 resolve(result);
             })
             .catch(function (err) {
+                console.log('verifyAuthToken: Error - ' + JSON.stringify(err));
                 reject(err);
             });
         });

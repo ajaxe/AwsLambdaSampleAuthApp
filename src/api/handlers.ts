@@ -82,19 +82,19 @@ const validateCsrfTokens = async function (event: APIGatewayProxyEvent): Promise
             formToken: tokenHeaderValue,
             cookieToken: tokenCookieValue
         })
-        .then(function (result) {
-            if (result) {
-                resolve(success);
-            }
-            else {
-                forbiddenResp.body = getBodyMessage('Invalid token');
-                reject(forbiddenResp);
-            }
-        })
-        .catch(function (err) {
-            console.log('catch for validateCsrfTokens');
-            reject(err);
-        });
+            .then(function (result) {
+                if (result) {
+                    resolve(success);
+                }
+                else {
+                    forbiddenResp.body = getBodyMessage('Invalid token');
+                    reject(forbiddenResp);
+                }
+            })
+            .catch(function (err) {
+                console.log('catch for validateCsrfTokens');
+                reject(err);
+            });
     });
 };
 /**
@@ -118,7 +118,11 @@ const validateModel = function <T extends ValidatableObject>(event: APIGatewayPr
             reject(badResp);
             return;
         }
-        Object.assign(model, JSON.parse(event.body));
+        let body = event.body;
+        if (event.isBase64Encoded) {
+            body = Buffer.from(body, 'base64').toString('ascii');
+        }
+        Object.assign(model, JSON.parse(body));
         let validationResult = model.validate();
         if (!validationResult.isValid) {
             badResp.body = JSON.stringify(validationResult);
@@ -229,10 +233,13 @@ const loginUser: APIGatewayProxyHandler = async function (event: APIGatewayProxy
                 if (loginResult.isLoggedIn) {
                     authCookie.setCookie(CommonConfig.authCookieName, loginResult.jwtToken, CommonConfig.tokenExpireDays, CommonConfig.domain, false);
                     // send success response
+                    let h = Object.assign({}, authCookie.getHeader(), {
+                        'content-type': 'application/json'
+                    });
                     finalResult = {
-                        headers: authCookie.getHeader(),
+                        headers: h,
                         statusCode: 200,
-                        body: JSON.stringify({ message: 'Login successful'})
+                        body: JSON.stringify({ message: 'Login successful' })
                     };
                 }
                 else {
@@ -240,7 +247,7 @@ const loginUser: APIGatewayProxyHandler = async function (event: APIGatewayProxy
                     finalResult = {
                         headers: authCookie.getHeader(),
                         statusCode: 401,
-                        body: JSON.stringify({ message: 'Unauthorize'})
+                        body: JSON.stringify({ message: 'Unauthorize' })
                     }
                 }
                 resolve(finalResult);
@@ -269,7 +276,7 @@ const logoutUser: APIGatewayProxyHandler = async function (event: APIGatewayProx
                 finalResult = {
                     headers: authCookie.getHeader(),
                     statusCode: 200,
-                    body: JSON.stringify({ message: 'Logout completed '})
+                    body: JSON.stringify({ message: 'Logout completed ' })
                 }
                 resolve(finalResult);
             })
@@ -283,11 +290,27 @@ const logoutUser: APIGatewayProxyHandler = async function (event: APIGatewayProx
     });
 };
 
-const checkUserSession: APIGatewayProxyHandler = function(event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
+const checkUserSession: APIGatewayProxyHandler = function (event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
     callback(null, {
         statusCode: 200,
         body: JSON.stringify({ message: "valid session" })
     });
 }
 
-export { indexGet, assetGet, registerUser, loginUser, logoutUser, checkUserSession }
+const getUsers: APIGatewayProxyHandler = async function (event: APIGatewayProxyEvent, context: Context, callback: APIGatewayProxyCallback) {
+    try {
+        let users = await ObjectFactory.getApplicationServices().getUsers();
+        let finalResult: APIGatewayProxyResult = {
+            statusCode: 200,
+            body: JSON.stringify(users)
+        };
+        return finalResult;
+    }
+    catch (err) {
+        let hasStack = !!err['stack'];
+        let fn: () => APIGatewayProxyResult = !hasStack ? () => err : null;
+        return exceptionHandler(err, event, fn);
+    }
+}
+
+export { indexGet, assetGet, registerUser, loginUser, logoutUser, checkUserSession, getUsers }

@@ -34,6 +34,6 @@ export class ObjectFactory {
     }
 
     static getAuthTokenRepository(): AuthTokenRepository {
-        return new DynamoAuthTokenRepository(dataMapperFactory());
+        return new DynamoAuthTokenRepository(ObjectFactory.getUserRespository());
     }
 }

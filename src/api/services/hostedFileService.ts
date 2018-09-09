@@ -25,8 +25,16 @@ export class HostFileServices implements FileServices {
                 else {
                     let buf: Buffer = <Buffer>data.Body;
                     if (buf) {
-
-                        let dataString: string = buf.toString('utf8'),
+                        console.log('object content-type: ' + data.ContentType);
+                        let encoding = 'base64',
+                            isBase64Encoded = true,
+                            ctype = data.ContentType;
+                        if((/(json|javascript|css|html)/gi).test(data.ContentType)) {
+                            encoding = 'utf8';
+                            isBase64Encoded = false;
+                            ctype = `${data.ContentType}; charset=UTF-8`;
+                        }
+                        let dataString: string = buf.toString(encoding),
                             response = new AssetResponse();
                         if(processor) {
                             response.body = processor(dataString);
@@ -34,9 +42,9 @@ export class HostFileServices implements FileServices {
                         else {
                             response.body = dataString;
                         }
-
+                        response.isBase64Encoded = isBase64Encoded;
                         response.headers = {
-                            "Content-Type": `${data.ContentType}; charset=UTF-8`
+                            "Content-Type": ctype
                         };
                         resolve(response);
                     }

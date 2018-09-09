@@ -47,8 +47,8 @@ const getAuthPolicy = function (result:AuthVerificationResult, methodArn: string
     console.log('Creating policy document');
     let methodPrefix = methodArn.split('/').shift(),
     resources: string[] = [
-        `${methodPrefix}/*/GET/user/session`,
-        `${methodPrefix}/*/POST/user/logout`
+        `${methodPrefix}/*/GET/account/session`,
+        `${methodPrefix}/*/POST/account/logout`
     ],
     allow = result.tokenValid,
     user = result.user,

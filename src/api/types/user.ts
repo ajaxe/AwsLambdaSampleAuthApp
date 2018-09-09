@@ -20,4 +20,9 @@ export class User {
     active: boolean;
     @attribute({ memberType: embed(AuthToken) })
     tokens?: Array<AuthToken>;
+
+    static DoesNotExist(userId?: string): void {
+        let errMesg = '[Does not Exist] User does not exist.' + (userId ? ' UserId: ' + userId : '');
+        throw new Error(errMesg);
+    }
 }

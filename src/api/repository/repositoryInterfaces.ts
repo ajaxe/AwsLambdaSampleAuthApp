@@ -11,6 +11,8 @@ export interface UserRepository {
     getUserById(userId: string): Promise<User>;
 
     getUserByUsername(username: string): Promise<User | null>;
+
+    updateUser(user: User): Promise<User>;
 }
 
 export interface ConfigRepository {
@@ -24,9 +26,9 @@ export interface ConfigRepository {
 
 export interface AuthTokenRepository {
 
-    addAuthToken(authToken: AuthToken): Promise<AuthToken>;
+    addAuthToken(userId: string, authToken: AuthToken): Promise<AuthToken>;
 
-    getAuthToken(authTokenId: string): Promise<AuthToken>;
+    getAuthToken(userId: string, authTokenId: string): Promise<AuthToken>;
 
-    deleteAuthToken(authTokenId: string): Promise<AuthToken>;
+    deleteAuthToken(userId: string, authTokenId: string): Promise<AuthToken>;
 }

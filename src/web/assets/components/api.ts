@@ -1,13 +1,18 @@
 import { UserRegistration } from '../../../api/types/userRegistration';
 import { LoginData } from '../../../api/types/loginData';
+import { User } from '../../../api/types/user';
 import $ from 'jquery';
-import cookie from 'cookie';
 
-const registerUrl = 'user/register';
-const sessionUrl = 'user/session';
-const loginUrl = 'user/login';
-const logoutUrl = 'user/logout';
+type AjaxHeaders = { [key: string]: string };
+type HeaderOptions = { includeAuth?: boolean, includeCsrf?: boolean };
+
+const registerUrl = 'account/register';
+const sessionUrl = 'account/session';
+const loginUrl = 'account/login';
+const logoutUrl = 'account/logout';
+const getUsers = 'users';
 const tokenHeaderName = "X-CSRF-TOKEN";
+const AuthorizationHeader = 'Authorization';
 const authTokenName = 'auth_token';
 let requestToken: string = '';
 export class Api {
@@ -39,6 +44,27 @@ export class Api {
         return token;
     }
 
+    private getAuthHeader(): string {
+        let authToken = this.getAuthTokenFromCookie();
+        if(authToken) {
+            return `Bearer ${authToken}`;
+        }
+        return '';
+    }
+
+    private getXhrHeaders(options: HeaderOptions): AjaxHeaders {
+        let headers: AjaxHeaders = {
+            'accept': 'application/json'
+        };
+        if(options.includeCsrf) {
+            headers[tokenHeaderName] = this.getRequestHeaderToken();
+        }
+        if(options.includeAuth) {
+            headers[AuthorizationHeader] = this.getAuthHeader();
+        }
+        return headers;
+    }
+
     registerUser(registerData: UserRegistration): Promise<string | null> {
         let r = registerData.validate(),
             self = this;
@@ -47,8 +73,9 @@ export class Api {
         }
         else {
             return new Promise(function (resolve, reject) {
-                let headers: { [key: string]: string } = {};
-                headers[tokenHeaderName] = self.getRequestHeaderToken();
+                let headers: AjaxHeaders = self.getXhrHeaders({
+                    includeCsrf: true
+                });
                 $.post({
                     url: registerUrl,
                     data: JSON.stringify(registerData),
@@ -84,11 +111,11 @@ export class Api {
     checkUserSession(): Promise<boolean> {
         let self = this;
         return new Promise<boolean>(function (resolve/*, reject*/) {
-            let headers: { [key: string]: string } = {}, authToken = self.getAuthTokenFromCookie();
-            if(authToken) {
-                headers['Authorization'] = `Bearer ${authToken}`;
-            }
-            else {
+            //resolve(true); return;
+            let headers: AjaxHeaders = self.getXhrHeaders({
+                includeAuth: true
+            });
+            if(!headers[AuthorizationHeader]) {
                 resolve(false);
                 return;
             }
@@ -114,8 +141,9 @@ export class Api {
         }
         else {
             return new Promise(function (resolve, reject) {
-                let headers: { [key: string]: string } = {};
-                headers[tokenHeaderName] = self.getRequestHeaderToken();
+                let headers: AjaxHeaders = self.getXhrHeaders({
+                    includeCsrf: true
+                });
                 $.post({
                     url: loginUrl,
                     data: JSON.stringify(loginData),
@@ -148,12 +176,10 @@ export class Api {
     logout(): Promise<any> {
         let self = this;
         return new Promise<any>(function(resolve/*, reject*/){
-            let headers: { [key: string]: string } = {},
-                authToken = self.getAuthTokenFromCookie();
-            if(authToken) {
-                headers['Authorization'] = `Bearer ${authToken}`;
-            };
-            headers[tokenHeaderName] = self.getRequestHeaderToken();
+            let headers: AjaxHeaders = self.getXhrHeaders({
+                includeAuth: true,
+                includeCsrf: true
+            });
             $.post({
                 url: logoutUrl,
                 headers: headers
@@ -164,6 +190,35 @@ export class Api {
             .catch(function(){
                 console.log(arguments);
                 resolve();
+            })
+        });
+    }
+
+    getCurrentSessionId(): string {
+        let token = this.getAuthTokenFromCookie();
+        if(!token) {
+            return '';
+        }
+        let payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.jti;
+    }
+
+    getUsers(): Promise<User[]> {
+        let self = this;
+        return new Promise<any>(function(resolve, reject){
+            let headers: AjaxHeaders = self.getXhrHeaders({
+                includeAuth: true
+            });
+            $.get({
+                url: getUsers,
+                headers: headers
+            })
+            .then(function(data){
+                resolve(data);
+            })
+            .catch(function(){
+                console.log(arguments);
+                reject('Error getting user list');
             })
         });
     }

@@ -4,7 +4,7 @@ import { User } from "../types/user";
 import { ManagedKeyServices } from "./serviceInterfaces";
 import { LoginData } from "../types/loginData";
 import { LoginResult } from "../types/loginResult";
-import { AuthVerificationResult, AuthResultData } from "../types/authVerficationResult";
+import { AuthResultData } from "../types/authVerficationResult";
 
 export class ApplicationServices {
 
@@ -42,10 +42,22 @@ export class ApplicationServices {
         return result;
     }
 
-    logoutUser(authVerificationResult: AuthResultData): Promise<boolean> {
-        return this.authRepo.deleteAuthToken(authVerificationResult.authTokenId)
+    logoutUser(authResultData: AuthResultData): Promise<boolean> {
+        return this.authRepo.deleteAuthToken(authResultData.userId, authResultData.authTokenId)
         .then(function() {
             return Promise.resolve(true);
         });
+    }
+    async getUsers(): Promise<User[]> {
+        let list = await this.userRepo.getUsers(0,0);
+        list.forEach(function(val, index){
+            val.password = null;
+            if(val.tokens) {
+                val.tokens.forEach(function(v){
+                    v.tokenValue = null;
+                });
+            }
+        });
+        return list;
     }
 }
