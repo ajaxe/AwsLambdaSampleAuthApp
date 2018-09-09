@@ -17,13 +17,13 @@
                 <div class="col">
                     <div class="row">
                         <div :class="col1Css"><label>Created</label></div>
-                        <div :class="col2Css">{{t.created}}</div>
+                        <div :class="col2Css">{{t.created | formatDate}}</div>
                     </div>
                 </div>
                 <div class="col">
                     <div class="row">
                         <div :class="col1Css"><label>Expiration</label></div>
-                        <div :class="col2Css">{{t.expire}}</div>
+                        <div :class="col2Css">{{t.expire | formatDate}}</div>
                     </div>
                 </div>
             </div>

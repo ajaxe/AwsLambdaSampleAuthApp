@@ -48,4 +48,16 @@ export class ApplicationServices {
             return Promise.resolve(true);
         });
     }
+    async getUsers(): Promise<User[]> {
+        let list = await this.userRepo.getUsers(0,0);
+        list.forEach(function(val, index){
+            val.password = null;
+            if(val.tokens) {
+                val.tokens.forEach(function(v){
+                    v.tokenValue = null;
+                });
+            }
+        });
+        return list;
+    }
 }

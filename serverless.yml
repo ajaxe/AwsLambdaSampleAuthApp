@@ -133,7 +133,7 @@ functions:
     memorySize: 128
     events: # The Events that trigger this Function
       - http: # This creates an API Gateway HTTP endpoint which can be used to trigger this function.  Learn more in "events/apigateway"
-          path: user/session # Path for this endpoint
+          path: /account/session # Path for this endpoint
           method: get # HTTP method for this endpoint
           cors: false
           authorizer: appAuthorizer
@@ -150,7 +150,7 @@ functions:
       dataKeyEnvVar: "${self:custom.dataKey}"
     events: # The Events that trigger this Function
       - http: # This creates an API Gateway HTTP endpoint which can be used to trigger this function.  Learn more in "events/apigateway"
-          path: user/logout # Path for this endpoint
+          path: /account/logout # Path for this endpoint
           method: post # HTTP method for this endpoint
           cors: false
           authorizer: appAuthorizer
@@ -167,7 +167,7 @@ functions:
       dataKeyEnvVar: ${self:custom.dataKey}"
     events: # The Events that trigger this Function
       - http: # This creates an API Gateway HTTP endpoint which can be used to trigger this function.  Learn more in "events/apigateway"
-          path: /user/register # Path for this endpoint
+          path: /account/register # Path for this endpoint
           method: post # HTTP method for this endpoint
           cors: false
 
@@ -180,8 +180,21 @@ functions:
       dataKeyEnvVar: ${self:custom.dataKey}"
     events: # The Events that trigger this Function
       - http: # This creates an API Gateway HTTP endpoint which can be used to trigger this function.  Learn more in "events/apigateway"
-          path: /user/login # Path for this endpoint
+          path: /account/login # Path for this endpoint
           method: post # HTTP method for this endpoint
+          cors: false
+
+  usersPost:
+    handler: src/api/handlers.getUsers
+    name: ${self:custom.serviceName}-${self:provider.stage}-usersPost
+    description: Get all users without sensitive data
+    memorySize: 128
+    environment:
+      dataKeyEnvVar: ${self:custom.dataKey}"
+    events: # The Events that trigger this Function
+      - http: # This creates an API Gateway HTTP endpoint which can be used to trigger this function.  Learn more in "events/apigateway"
+          path: /users # Path for this endpoint
+          method: get # HTTP method for this endpoint
           cors: false
 
 plugins:

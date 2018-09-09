@@ -32,6 +32,9 @@ export default class UserList extends Vue {
     .then(function(users){
       self.users = users;
       self.isLoading = false;
+    })
+    .catch(function(message){
+      alert(message);
     });
   }
 }
