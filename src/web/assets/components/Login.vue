@@ -40,7 +40,7 @@
 
 <script lang="ts">
 import { Vue, Component, Provide } from "vue-property-decorator";
-import { LoginData } from "../../../api/types/loginData";
+import { LoginData } from "./types/loginData";
 import { Api } from "./api";
 import { RouteNames } from "../routes";
 

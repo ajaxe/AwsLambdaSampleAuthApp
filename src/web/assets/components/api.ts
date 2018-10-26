@@ -1,6 +1,6 @@
-import { UserRegistration } from '../../../api/types/userRegistration';
-import { LoginData } from '../../../api/types/loginData';
-import { User } from '../../../api/types/user';
+import { UserRegistration } from './types/userRegistration';
+import { LoginData } from './types/loginData';
+import { User } from './types/user';
 import $ from 'jquery';
 
 type AjaxHeaders = { [key: string]: string };

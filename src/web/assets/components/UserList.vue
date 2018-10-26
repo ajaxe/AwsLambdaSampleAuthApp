@@ -10,7 +10,7 @@
 <script lang="ts">
 import { Vue, Component, Provide } from "vue-property-decorator";
 import { Api } from "./api";
-import { User } from '../../../api/types/user';
+import { User } from './types/user';
 import UserListItem from './UserListItem.vue';
 
 @Component({

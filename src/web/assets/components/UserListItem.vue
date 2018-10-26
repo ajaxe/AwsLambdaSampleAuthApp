@@ -50,8 +50,8 @@
 <script lang="ts">
 import { Vue, Component, Prop, Provide } from "vue-property-decorator";
 import { Api } from "./api";
-import { User } from "../../../api/types/user";
-import { AuthToken } from "../../../api/types/authToken";
+import { User } from "./types/user";
+import { AuthToken } from "./types/authToken";
 
 @Component
 export default class UserListItem extends Vue {

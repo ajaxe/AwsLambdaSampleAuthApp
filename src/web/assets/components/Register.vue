@@ -38,7 +38,7 @@
 import { Vue, Component, Provide } from "vue-property-decorator";
 import { Api } from './api';
 import { RouteNames } from '../routes';
-import { UserRegistration } from '../../../api/types/userRegistration';
+import { UserRegistration } from './types/userRegistration';
 
 @Component
 export default class Register extends Vue {
